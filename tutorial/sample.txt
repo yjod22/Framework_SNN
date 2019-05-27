@@ -1,2 +1,3 @@
 add changes are registered at index
 commit index status is recorded
+pull remote repo contents bring back
