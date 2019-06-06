@@ -3,3 +3,4 @@ commit index status is recorded
 pull remote repo contents bring back
 from the server
 version8.1 files are checked from the server
+results of test16 has been added
