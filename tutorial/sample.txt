@@ -2,3 +2,4 @@ add changes are registered at index
 commit index status is recorded
 pull remote repo contents bring back
 from the server
+version8.1 files are checked from the server
