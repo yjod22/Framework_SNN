@@ -17,6 +17,17 @@
 # History
 ################################################################################
 # File:		   holayer.py
+# Version:     9.0
+# Author/Date: Junseok Oh / 2019-06-07
+# Change:      (SCR_V8.0-2): Fix bug of set the state in ActivationFuncTanhSN
+#			   (SCR_V8.0-3): develop LUT-based APC
+#			   (SCR_V8.0-4): develop 8bit APC
+#			   (SCR_V8.0-5): Increase dimension readability by shape
+#			   (SCR_V8.0-6): Apply LUT-based techniques in dense layer
+# Cause:       Performance improvements
+# Initiator:   Junseok Oh
+################################################################################
+# File:		   holayer.py
 # Version:     8.0
 # Author/Date: Junseok Oh / 2019-05-23
 # Change:      (SCR_V6.4-1): NN Optimization-JSO (Make use of listIndex not to consider zero weights in addition)

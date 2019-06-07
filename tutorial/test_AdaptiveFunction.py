@@ -17,8 +17,8 @@
 # History
 ################################################################################
 # File:		   test_AdaptiveFunction.py
-# Version:     8.1
-# Author/Date: Junseok Oh / 2019-05-29
+# Version:     9.0
+# Author/Date: Junseok Oh / 2019-06-07
 # Change:      (SCR_V8.0-1): test adaptive function in STanhSN and STanhLUTSN
 # Cause:       -
 # Initiator:   Florian Neugebauer
@@ -108,7 +108,7 @@ def GenerateLookupTableForSTanh(byte, start_state, PAR_numState):
     return (np.packbits(x)[0], state)
 
 
-'''ActivationFuncSTanhLUTSN, Function version v8.1'''
+'''ActivationFuncSTanhLUTSN, Function version v9.0'''
 def ActivationFuncSTanhLUTSN(x, PAR_numState):
     # Represent the binary value into the 1byte decimal value
     sn = np.packbits(x)
@@ -133,7 +133,7 @@ def ActivationFuncSTanhLUTSN(x, PAR_numState):
     return out
 
 
-'''ActiavtionFuncTanhSN, Function version v8.1'''
+'''ActiavtionFuncTanhSN, Function version v9.0'''
 def ActiavtionFuncTanhSN(x, PAR_numState):
     """activation function for stochastic NN"""
     # the number of states

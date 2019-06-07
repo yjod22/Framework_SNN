@@ -17,6 +17,14 @@
 # History
 ################################################################################
 # File:		   bnlayer.py
+# Version:     9.0
+# Author/Date: Junseok Oh / 2019-06-07
+# Change:      (SCR_v8.0-7): Fix bug in finding the number of conv layers
+#			   (SCR_V8.0-9): Fix bug in GetModel
+# Cause:       bug fix
+# Initiator:   Junseok Oh
+################################################################################
+# File:		   bnlayer.py
 # Version:     8.0
 # Author/Date: Junseok Oh / 2019-05-23
 # Change:      (SCR_v6.4-18): Created

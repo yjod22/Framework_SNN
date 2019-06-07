@@ -17,8 +17,8 @@
 # History
 ################################################################################
 # File:		   intensive_snn_tests.py
-# Version:     8.1
-# Author/Date: Junseok Oh / 2019-06-04
+# Version:     9.0
+# Author/Date: Junseok Oh / 2019-06-07
 # Change:      snLength: 4096
 #              epoch: 20, 1+19
 #              # of test cases: 30
