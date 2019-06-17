@@ -17,6 +17,15 @@
 # History
 ################################################################################
 # File:		   holayer.py
+# Version:     10.0
+# Author/Date: Junseok Oh / 2019-06-17
+# Change:      (SCR_V9.0-1): Deploy SC-based ReLU
+#              (SCR_V9.0-2): Deploy APCs (8, 16, 25bits)
+#              (SCR_V9.0-3): Generate snLookupTableNumAPC
+# Cause:       Catch up with the recent new research outcomes
+# Initiator:   Junseok Oh
+################################################################################
+# File:		   holayer.py
 # Version:     9.0
 # Author/Date: Junseok Oh / 2019-06-07
 # Change:      (SCR_V8.0-2): Fix bug of set the state in ActivationFuncTanhSN
@@ -200,6 +209,7 @@ import numpy as np
 from functools import reduce
 import operator
 import copy
+import pickle
 
 class HOLayer(object):
     def __call__(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, **kwargs):
@@ -460,9 +470,16 @@ class HOActivation(HOLayer):
             if (key == "use_bias"):
                 self.use_bias = kwargs[key]
 
-        # Generate the lookup table for 16bit and 8bit APC
-        self.snLookupTableNumAPC16 = np.array([self.GenerateLookupTableForAPC16(twoByte) for twoByte in range(65536)])
-        self.snLookupTableNumAPC8 = np.array([self.GenerateLookupTableForAPC8(Byte) for Byte in range(256)])
+        # Generate the lookup table for 8bit, 16bit, and 25bit APC
+        self.snLookupTableNumAPC8 = 0
+        self.snLookupTableNumAPC16 = 0
+        self.snLookupTableNumAPC25 = 0
+
+        with open('snLookupTableNumAPC.pkl', 'rb') as input:
+            self.snLookupTableNumAPC8 = pickle.load(input)
+            self.snLookupTableNumAPC16 = pickle.load(input)
+            _ = pickle.load(input)
+            self.snLookupTableNumAPC25 = pickle.load(input)
 
         if (self.activationFunc == "Relu"):
             # Generate the lookup table for Relu activation function
@@ -602,135 +619,83 @@ class HOActivation(HOLayer):
 
         return out
 
-    def GenerateLookupTableForAPC8(self, Byte):
-        # Represent the decimal value into 8bit binary value
-        x = np.unpackbits(np.array([Byte], dtype='uint8'))
-
-        # Initialize the sum
-        sum = 0
-
-        # AND, OR gates
-        a = (x[0] | x[1])
-        b = (x[2] & x[3])
-        c = (x[4] | x[5])
-        t0 = (x[6] & x[7])
-
-        # Full Adder 1 (Carry:x1, Sum:x2)
-        t2 = ((a & b) | (b & c) | (c & a))
-        t1 = ((a ^ b) ^ c)
-
-        # Represent in the binary format
-        sum = 4 * t2 + 2 * t1 + 2 * t0
-
-        return sum
-
-    def unpack16bits(self, in_intAr, Nbits):
-        ''' convert (numpyarray of uint => array of Nbits bits) for many bits in parallel'''
-        inSize_T = in_intAr.shape
-        in_intAr_flat = in_intAr.flatten()
-        out_NbitAr = np.zeros((len(in_intAr_flat), Nbits))
-        for iBits in range(Nbits):
-            out_NbitAr[:, iBits] = (in_intAr_flat >> iBits) & 1
-        out_NbitAr = out_NbitAr.reshape(inSize_T + (Nbits,))
-        return out_NbitAr
-
-    def GenerateLookupTableForAPC16(self, twoByte):
-        twoByte = np.array(twoByte)
-        # Represent the decimal value into 16bit binary value
-        x = self.unpack16bits(twoByte, 16).astype('uint16')
-        x = x[::-1]
-
-        # Initialize the sum
-        sum = 0
-
-        # AND, OR gates
-        a = (x[0] | x[1])
-        b = (x[2] & x[3])
-        c = (x[4] | x[5])
-        d = (x[6] & x[7])
-        e = (x[8] | x[9])
-        f = (x[10] & x[11])
-        z2 = (x[12] | x[13])
-        t0 = (x[14] & x[15])
-
-        # Full Adder 1 (Carry:x1, Sum:x2)
-        x1 = ((a & b) | (b & c) | (c & a))
-        x2 = ((a ^ b) ^ c)
-
-        # Full Adder 2 (Carry:y1, Sum:y2)
-        y1 = ((d & e) | (e & f) | (f & d))
-        y2 = ((d ^ e) ^ f)
-
-        # Full Adder 3 (Carry:z1, Sum:t1)
-        z1 = ((x2 & y2) | (y2 & z2) | (z2 & x2))
-        t1 = ((x2 ^ y2) ^ z2)
-
-        # Full Adder 4 (Carry:t3, Sum:t2)
-        t3 = ((x1 & y1) | (y1 & z1) | (z1 & x1))
-        t2 = ((x1 ^ y1) ^ z1)
-
-        # Represent in the binary format
-        sum = 8 * t3 + 4 * t2 + 2 * t1 + 2 * t0
-
-        return sum
-
     def SumUpAPCLUT(self, x):
         # Save the input in the buffer
-        t = copy.deepcopy(x)
+        t1 = copy.deepcopy(x)
+        t2 = copy.deepcopy(x)
 
         # The shape of the input x: (sizeTensor+sizeBias, snLength)
         size, snLength = x.shape
 
-        # Find the required number of APC16 and APC8
-        numAPC16 = int(size / 16)
-        numAPC8 = int((size % 16) / 8)
-        numAPC = numAPC8 + numAPC16
+        # Find the required number of APCs
+        numAPC25 = int(size / 25)
+        numAPC16 = int((size % 25) / 16)
+        numAPC8 = int(((size % 25) % 16) / 8)
 
         # Initialize the variable
+        sum25 = np.full(snLength, 0)
         sum16 = np.full(snLength, 0)
         sum8 = np.full(snLength, 0)
-        sum = np.full(snLength, 0)
 
-        # Remove the parts which are out of 16bit range
-        x = x[:16*numAPC16, :]
+        if (numAPC25 != 0):
+            # Remove the parts which are out of 25bit range
+            x = x[:25 * numAPC25, :]
 
-        # Transpose the input x: (snLength, sizeTensor+sizeBias)
-        x = x.transpose()
+            # Transpose the input x: (snLength, sizeTensor+sizeBias)
+            x = x.transpose()
 
-        # Reshape it in order to pack in 16bits (2 x 8bits)
-        x = x.reshape(snLength, -1, 2, 8)[:, :, ::-1]
+            # Insert 7bit-zeros at every 25bits
+            for i in range(numAPC25):
+                for j in range(7):
+                    x = np.insert(x, i * 32, False, axis=1)
 
-        # Save the dimension information
-        _, b, _, _ = x.shape
+            # Reshape it in order to pack in 16bits (4 x 8bits)
+            x = x.reshape(snLength, -1, 4, 8)[:, :, ::-1]
 
-        # Pack the bits
-        x = np.packbits(x).view(np.uint16)
+            # Save the dimension information
+            _, b, _, _ = x.shape
 
-        # Reshape it in order to handle the multiple APCs
-        x = x.reshape(b, -1, order='F')
+            # Pack the bits
+            x = np.packbits(x).view(np.uint32)
 
-        # Look up the table
-        for j in range(snLength):
-            # Set the count number as 0
-            jthSum = 0
-            for i in range(numAPC16):
-                jthSum += self.snLookupTableNumAPC16[x[i, j]]
-            sum16[j] = jthSum
+            # Reshape it in order to handle the multiple APCs
+            x = x.reshape(b, -1, order='F')
 
-        if(numAPC8 != 0):
-            t = t[16*numAPC16:(16*numAPC16+8*numAPC8), :]
-            t = t.transpose()
-            t = t.reshape(snLength, -1, 1, 8)
-            _, b, _, _ = t.shape
-            t = np.packbits(t).view(np.uint8)
-            t = t.reshape(b, -1, order='F')
+            # Look up the table
+            for j in range(snLength):
+                # Set the count number as 0
+                jthSum = 0
+                for i in range(numAPC25):
+                    jthSum += self.snLookupTableNumAPC25[x[i, j]]
+                sum25[j] = jthSum
+
+        if (numAPC16 != 0):
+            t1 = t1[25 * numAPC25:(25 * numAPC25 + 16 * numAPC16), :]
+            t1 = t1.transpose()
+            t1 = t1.reshape(snLength, -1, 2, 8)
+            _, b, _, _ = t1.shape
+            t1 = np.packbits(t1).view(np.uint16)
+            t1 = t1.reshape(b, -1, order='F')
+            for j in range(snLength):
+                jthSum = 0
+                for i in range(numAPC16):
+                    jthSum += self.snLookupTableNumAPC16[t1[i, j]]
+                sum16[j] = jthSum
+
+        if (numAPC8 != 0):
+            t2 = t2[(25 * numAPC25 + 16 * numAPC16):(25 * numAPC25 + 16 * numAPC16 + 8 * numAPC8), :]
+            t2 = t2.transpose()
+            t2 = t2.reshape(snLength, -1, 1, 8)
+            _, b, _, _ = t2.shape
+            t2 = np.packbits(t2).view(np.uint8)
+            t2 = t2.reshape(b, -1, order='F')
             for j in range(snLength):
                 jthSum = 0
                 for i in range(numAPC8):
-                    jthSum += self.snLookupTableNumAPC8[t[i, j]]
+                    jthSum += self.snLookupTableNumAPC8[t2[i, j]]
                 sum8[j] = jthSum
 
-        sum = sum8 + sum16
+        sum = sum25 + sum16 + sum8
 
         return sum
 
@@ -780,13 +745,13 @@ class HOActivation(HOLayer):
 
         return sum
 
-    def Count2Integer(self, x, snLength, numAPC16, numAPC8):
+    def Count2Integer(self, x, snLength, numAPC25, numAPC16, numAPC8):
         sumTotal = 0
 
         for i in range(len(x)):
             sumTotal = sumTotal + x[i]
 
-        ret = (sumTotal / snLength) * 2 - (16 * numAPC16) - (8 * numAPC8)
+        ret = (sumTotal / snLength) * 2 - (25 * numAPC25) - (16 * numAPC16) - (8 * numAPC8)
         return ret
 
     def UpDownCounter(self, x, sizeTensor, sizeState):
@@ -818,6 +783,48 @@ class HOActivation(HOLayer):
                 y[i] = 1
             else:
                 y[i] = 0
+
+        return y
+
+    def UpDownCounterReLU(self, x, sizeTensor, sizeState):
+        # the parameter sizeTensor here refers to (sizeTensor+sizeBias)
+
+        # len(x) = m
+        # sizeTensor = n
+        # sizeState = r
+        stateMax = sizeState - 1
+        stateHalf = int(sizeState / 2)
+        stateCurrent = stateHalf
+        y = np.full(len(x), False)
+        accumulated = 0
+
+        for i in range(len(x)):
+            # Bipolar 1s counting
+            v = x[i] * 2 - sizeTensor
+
+            # Update the current state
+            stateCurrent = stateCurrent + v
+
+            # Check the exceptional cases
+            if (stateCurrent > stateMax):
+                stateCurrent = stateMax
+            if (stateCurrent < 0):
+                stateCurrent = 0
+
+            # Enforce the output of ReLU to be greater than or equal to 0
+            if (accumulated < int(i / 2)):
+                y[i] = 1
+
+            # Otherwise, the output is  determined by the following FSM
+            else:
+                # Generate the output using the stochastic number
+                if (stateCurrent > stateHalf):
+                    y[i] = 1
+                else:
+                    y[i] = 0
+
+            # Accumulate the current output
+            accumulated += y[i]
 
         return y
 
@@ -895,13 +902,14 @@ class HOConnected(HOConn):
 
         elif (self.stochToInt == "APC"):
             count = np.full(self.snLength, 0)
-            numAPC16 = int(sizeTensor / 16)
-            numAPC8 = int((sizeTensor % 16) / 8)
+            numAPC25 = int(sizeTensor / 25)
+            numAPC16 = int((sizeTensor % 25) / 16)
+            numAPC8 = int(((sizeTensor % 25) % 16) / 8)
             for i in range(numClasses):
                 #self.dense_output[0, i] = self.APC(self.dense_output_SN[i], self.snLength, sizeTensor)
                 # count = self.SumUpAPC(self.dense_output_SN[i], self.snLength, numAPC)
                 count = self.SumUpAPCLUT(self.dense_output_SN[i])
-                self.dense_output[0, i] = self.Count2Integer(count, self.snLength, numAPC16, numAPC8)
+                self.dense_output[0, i] = self.Count2Integer(count, self.snLength, numAPC25, numAPC16, numAPC8)
                 del(count)
 
         # Biasing
@@ -1033,6 +1041,21 @@ class HOConvolution(HOConv):
             self.convOutput[0] = self.ActivationFuncReluLUTSN(self.convOutput[0])
             #self.convOutput[0] = self.ActivationFuncReluSN(self.convOutput[0])
             #print("end Relu")
+        elif(self.activationFunc == "SCRelu"):
+            self.convOutput[0] = self.UpDownCounterReLU(count, (sizeTensor+sizeBias), 4*(sizeTensor+sizeBias))
+            # Debugging purpose#######################################################
+            # numAPC25 = int(sizeTensor / 25)
+            # numAPC16 = int((sizeTensor % 25) / 16)
+            # numAPC8 = int(((sizeTensor % 25) % 16) / 8)
+            # tempInteger = np.zeros(1)
+            # tempInteger[0] = self.Count2Integer(count, self.snLength, numAPC25, numAPC16, numAPC8)
+            # if(tempInteger[0] > 1):
+            #     tempInteger[0] = 1
+            # elif(tempInteger[0] < -1):
+            #     tempInteger[0] = -1
+            # self.convOutput[0] = self.CreateSN(tempInteger[0], self.snLength)
+            ##########################################################################
+
         elif(self.activationFunc == "STanh"):
             #print("start STanh")
             if(sizeTensorCompact != 0):
@@ -1058,12 +1081,21 @@ class HOConvolution(HOConv):
         x_SN = np.full(length, False)
         if large:
             for i in range(int(np.ceil(((x + 1) / 2) * length))):
-                x_SN[i] = True
+                try:
+                    x_SN[i] = True
+                except IndexError:
+                    print("The number is out of range (-1, +1)")
+                    print("x: " + str(x))
         else:
             for i in range(int(np.floor(((x + 1) / 2) * length))):
-                x_SN[i] = True
+                try:
+                    x_SN[i] = True
+                except IndexError:
+                    print("The number is out of range (-1, +1)")
+                    print("x: " + str(x))
         np.random.shuffle(x_SN)
         return x_SN
+
 
 class HOMaxPoolingExact(HOMaxPooling):
     def __init__(self, PAR_Row, PAR_Col, PAR_SnLength):

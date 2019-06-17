@@ -92,7 +92,7 @@ class BNModel(object):
 
     def GetModel(self):
         #return copy.deepcopy(self.model)
-		return self.model
+        return self.model
 
     def GetId(self):
         return self.id
