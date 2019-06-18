@@ -16,6 +16,13 @@
 ###############################################################################
 # History
 ################################################################################
+# File:		   test_LUTbased_APC.py
+# Version:     10.0
+# Author/Date: Junseok Oh / 2019-06-14
+# Change:      (SCR_V9.0-1): Deploy SC-based ReLU
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
 # File:		   stanh_testing.py
 # Version:     8.0
 # Author/Date: Junseok Oh / 2019-05-23
