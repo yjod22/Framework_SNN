@@ -17,6 +17,13 @@
 # History
 ################################################################################
 # File:		   holayer.py
+# Version:     11.0
+# Author/Date: Junseok Oh / 2019-06-20
+# Change:      (SCR_V10.0-1): Pre-processing in APCs
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
+# File:		   holayer.py
 # Version:     10.0
 # Author/Date: Junseok Oh / 2019-06-17
 # Change:      (SCR_V9.0-1): Deploy SC-based ReLU
@@ -628,9 +635,28 @@ class HOActivation(HOLayer):
         size, snLength = x.shape
 
         # Find the required number of APCs
+        numAPC8 = 0
+        numAPC16 = 0
         numAPC25 = int(size / 25)
-        numAPC16 = int((size % 25) / 16)
-        numAPC8 = int(((size % 25) % 16) / 8)
+
+        # Check whether the pre-processing is needed or not
+        sizePreprocessed = 0
+        bPreprocessAPC8 = False
+        bPreprocessAPC16 = False
+        bPreprocessAPC25 = False
+        if (0 < (size % 25) < 8):
+            bPreprocessAPC8 = True
+            numAPC8 = 1
+        elif ((size % 25) == 8):
+            numAPC8 = 1
+        elif (8 < (size % 25) and (size % 25) < 16):
+            bPreprocessAPC16 = True
+            numAPC16 = 1
+        elif ((size % 25) == 16):
+            numAPC16 = 1
+        elif (16 < (size % 25) and (size % 25) < 25):
+            bPreprocessAPC25 = True
+            numAPC25 += 1
 
         # Initialize the variable
         sum25 = np.full(snLength, 0)
@@ -638,6 +664,14 @@ class HOActivation(HOLayer):
         sum8 = np.full(snLength, 0)
 
         if (numAPC25 != 0):
+            # Pre-process for the case where the size of input is less than 25bits
+            if (bPreprocessAPC25 != False):
+                sizePreprocessed = (25 * numAPC25) - size
+                snZeros = [[] for i in range(sizePreprocessed)]
+                for i in range(sizePreprocessed):
+                    snZeros[i] = self.CreateSN(0, snLength)
+                x = np.vstack((x, snZeros))
+
             # Remove the parts which are out of 25bit range
             x = x[:25 * numAPC25, :]
 
@@ -670,6 +704,14 @@ class HOActivation(HOLayer):
                 sum25[j] = jthSum
 
         if (numAPC16 != 0):
+            # Pre-process for the case where the size of input is less than 16bits
+            if (bPreprocessAPC16 != False):
+                sizePreprocessed = (25 * numAPC25) - size + 16
+                snZeros = [[] for i in range(sizePreprocessed)]
+                for i in range(sizePreprocessed):
+                    snZeros[i] = self.CreateSN(0, snLength)
+                t1 = np.vstack((t1, snZeros))
+
             t1 = t1[25 * numAPC25:(25 * numAPC25 + 16 * numAPC16), :]
             t1 = t1.transpose()
             t1 = t1.reshape(snLength, -1, 2, 8)
@@ -683,6 +725,14 @@ class HOActivation(HOLayer):
                 sum16[j] = jthSum
 
         if (numAPC8 != 0):
+            # Pre-process for the case where the size of input is less than 8bits
+            if (bPreprocessAPC8 != False):
+                sizePreprocessed = (25 * numAPC25) - size + 8
+                snZeros = [[] for i in range(sizePreprocessed)]
+                for i in range(sizePreprocessed):
+                    snZeros[i] = self.CreateSN(0, snLength)
+                t2 = np.vstack((t2, snZeros))
+
             t2 = t2[(25 * numAPC25 + 16 * numAPC16):(25 * numAPC25 + 16 * numAPC16 + 8 * numAPC8), :]
             t2 = t2.transpose()
             t2 = t2.reshape(snLength, -1, 1, 8)
@@ -697,7 +747,7 @@ class HOActivation(HOLayer):
 
         sum = sum25 + sum16 + sum8
 
-        return sum
+        return sum, sizePreprocessed, numAPC25, numAPC16, numAPC8
 
 
     def SumUpAPC(self, x, snLength, numAPC):
@@ -828,6 +878,30 @@ class HOActivation(HOLayer):
 
         return y
 
+
+    def CreateSN(self, x, length):
+        """create bipolar SN by comparing random vector elementwise to SN value x"""
+        # rand = np.random.rand(length)*2.0 - 1.0
+        # x_SN = np.less(rand, x)
+        large = np.random.rand(1)
+        x_SN = np.full(length, False)
+        if large:
+            for i in range(int(np.ceil(((x + 1) / 2) * length))):
+                try:
+                    x_SN[i] = True
+                except IndexError:
+                    print("The number is out of range (-1, +1)")
+                    print("x: " + str(x))
+        else:
+            for i in range(int(np.floor(((x + 1) / 2) * length))):
+                try:
+                    x_SN[i] = True
+                except IndexError:
+                    print("The number is out of range (-1, +1)")
+                    print("x: " + str(x))
+        np.random.shuffle(x_SN)
+        return x_SN
+
 class HOMaxPooling(HOLayer):
     def Call(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, **kwargs):
         output = self.PoolingFunc(inputs)
@@ -902,13 +976,10 @@ class HOConnected(HOConn):
 
         elif (self.stochToInt == "APC"):
             count = np.full(self.snLength, 0)
-            numAPC25 = int(sizeTensor / 25)
-            numAPC16 = int((sizeTensor % 25) / 16)
-            numAPC8 = int(((sizeTensor % 25) % 16) / 8)
             for i in range(numClasses):
                 #self.dense_output[0, i] = self.APC(self.dense_output_SN[i], self.snLength, sizeTensor)
                 # count = self.SumUpAPC(self.dense_output_SN[i], self.snLength, numAPC)
-                count = self.SumUpAPCLUT(self.dense_output_SN[i])
+                count, _, numAPC25, numAPC16, numAPC8  = self.SumUpAPCLUT(self.dense_output_SN[i])
                 self.dense_output[0, i] = self.Count2Integer(count, self.snLength, numAPC25, numAPC16, numAPC8)
                 del(count)
 
@@ -980,12 +1051,12 @@ class HOConvolution(HOConv):
             sizeBias = 0
 
         # Determine the size of tensors
-        sizeTensor = numInputPlanes * sizeRow * sizeCol
+        sizeTensor = sizeBias + (numInputPlanes * sizeRow * sizeCol)
         # numInputPlanes = int (inputs.size / inputs[0].size) # The number of planes in the inputs
         # sizeTensor = int(inputs.size / inputs[0][0][0].size) # it is equal to (numInputPlanes * self.matrixSize)
 
         # Initialize the Convolution output
-        self.listProductSN = np.full((sizeTensor+sizeBias, self.snLength), False)
+        self.listProductSN = np.full((sizeTensor, self.snLength), False)
 
         # PRODUCT in the inner product operations
         for k in range(numInputPlanes):
@@ -995,7 +1066,7 @@ class HOConvolution(HOConv):
                                                                                                        inputs[k, self.row-1-i, self.col-1-j]))
         # Put the bias in the last element of listProductSN if the bias exists
         if(self.use_bias == 'True'):
-            self.listProductSN[sizeTensor] = bias
+            self.listProductSN[sizeTensor-1] = bias
 
         # Make use of listIndex not to consider zero weights in addition operation
         sizeTensorCompact = len(listIndex)
@@ -1026,8 +1097,7 @@ class HOConvolution(HOConv):
             count = np.full(self.snLength, 0)
             #numAPC = int((sizeTensor + sizeBias) / 16)
             #count = self.SumUpAPC(self.listProductSN, self.snLength, numAPC)
-            count = self.SumUpAPCLUT(self.listProductSN)
-
+            count, sizePreprocessed, _, _, _ = self.SumUpAPCLUT(self.listProductSN)
             # Debugging purpose#######################################################
             #if (numInputPlanes != 1):
             #    self.convOutputDebug = self.Count2Integer(count, self.snLength, numAPC)
@@ -1042,7 +1112,7 @@ class HOConvolution(HOConv):
             #self.convOutput[0] = self.ActivationFuncReluSN(self.convOutput[0])
             #print("end Relu")
         elif(self.activationFunc == "SCRelu"):
-            self.convOutput[0] = self.UpDownCounterReLU(count, (sizeTensor+sizeBias), 4*(sizeTensor+sizeBias))
+            self.convOutput[0] = self.UpDownCounterReLU(count, (sizeTensor+sizePreprocessed), 4*(sizeTensor+sizePreprocessed))
             # Debugging purpose#######################################################
             # numAPC25 = int(sizeTensor / 25)
             # numAPC16 = int((sizeTensor % 25) / 16)
@@ -1069,32 +1139,9 @@ class HOConvolution(HOConv):
             #else:
             #    pass
             ##########################################################################
-            self.convOutput[0] = self.UpDownCounter(count, (sizeTensor+sizeBias), 2*(sizeTensor+sizeBias)) # 1/s = 1
+            self.convOutput[0] = self.UpDownCounter(count, (sizeTensor+sizePreprocessed), 2*(sizeTensor+sizePreprocessed)) # 1/s = 1
 
         return self.convOutput
-
-    def CreateSN(self, x, length):
-        """create bipolar SN by comparing random vector elementwise to SN value x"""
-        # rand = np.random.rand(length)*2.0 - 1.0
-        # x_SN = np.less(rand, x)
-        large = np.random.rand(1)
-        x_SN = np.full(length, False)
-        if large:
-            for i in range(int(np.ceil(((x + 1) / 2) * length))):
-                try:
-                    x_SN[i] = True
-                except IndexError:
-                    print("The number is out of range (-1, +1)")
-                    print("x: " + str(x))
-        else:
-            for i in range(int(np.floor(((x + 1) / 2) * length))):
-                try:
-                    x_SN[i] = True
-                except IndexError:
-                    print("The number is out of range (-1, +1)")
-                    print("x: " + str(x))
-        np.random.shuffle(x_SN)
-        return x_SN
 
 
 class HOMaxPoolingExact(HOMaxPooling):

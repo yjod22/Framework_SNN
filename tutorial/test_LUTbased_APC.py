@@ -17,6 +17,13 @@
 # History
 ################################################################################
 # File:		   test_LUTbased_APC.py
+# Version:     11.0
+# Author/Date: Junseok Oh / 2019-06-18
+# Change:      (SCR_V10.0-1): Pre-processing in APCs
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
+# File:		   test_LUTbased_APC.py
 # Version:     10.0
 # Author/Date: Junseok Oh / 2019-06-14
 # Change:      (SCR_V9.0-2): Deploy APCs(8, 16, 25bits)
@@ -164,9 +171,27 @@ def SumUpAPCLUT(x):
     size, snLength = x.shape
 
     # Find the required number of APCs
+    numAPC8 = 0
+    numAPC16 = 0
     numAPC25 = int(size / 25)
-    numAPC16 = int((size % 25) / 16)
-    numAPC8 = int(((size % 25) % 16) / 8)
+
+    # Check whether the pre-processing is needed or not
+    bPreprocessAPC8 = False
+    bPreprocessAPC16 = False
+    bPreprocessAPC25 = False
+    if(0 < (size%25) < 8):
+        bPreprocessAPC8 = True
+        numAPC8 = 1
+    elif((size%25) == 8):
+        numAPC8 = 1
+    elif(8 < (size%25) and (size%25) < 16):
+        bPreprocessAPC16 = True
+        numAPC16 = 1
+    elif((size%25) == 16):
+        numAPC16 = 1
+    elif(16 < (size%25) and (size%25) < 25):
+        bPreprocessAPC25 = True
+        numAPC25 += 1
 
     # Initialize the variable
     sum25 = np.full(snLength, 0)
@@ -174,6 +199,14 @@ def SumUpAPCLUT(x):
     sum8 = np.full(snLength, 0)
 
     if (numAPC25 != 0):
+        # Pre-process for the case where the size of input is less than 25bits
+        if(bPreprocessAPC25 != False):
+            sizePreprocessed = (25 * numAPC25) - size
+            snZeros = [[] for i in range(sizePreprocessed)]
+            for i in range(sizePreprocessed):
+                snZeros[i] = createSN(0, snLength)
+            x = np.vstack((x, snZeros))
+
         # Remove the parts which are out of 25bit range
         x = x[:25 * numAPC25, :]
 
@@ -206,6 +239,14 @@ def SumUpAPCLUT(x):
             sum25[j] = jthSum
 
     if (numAPC16 != 0):
+        # Pre-process for the case where the size of input is less than 16bits
+        if(bPreprocessAPC16 != False):
+            sizePreprocessed = (25 * numAPC25) - size + 16
+            snZeros = [[] for i in range(sizePreprocessed)]
+            for i in range(sizePreprocessed):
+                snZeros[i] = createSN(0, snLength)
+            t1 = np.vstack((t1, snZeros))
+
         t1 = t1[25 * numAPC25:(25 * numAPC25 + 16 * numAPC16), :]
         t1 = t1.transpose()
         t1 = t1.reshape(snLength, -1, 2, 8)
@@ -219,6 +260,14 @@ def SumUpAPCLUT(x):
             sum16[j] = jthSum
 
     if (numAPC8 != 0):
+        # Pre-process for the case where the size of input is less than 8bits
+        if(bPreprocessAPC8 != False):
+            sizePreprocessed = (25 * numAPC25) - size + 8
+            snZeros = [[] for i in range(sizePreprocessed)]
+            for i in range(sizePreprocessed):
+                snZeros[i] = createSN(0, snLength)
+            t2 = np.vstack((t2, snZeros))
+
         t2 = t2[(25 * numAPC25 + 16 * numAPC16):(25 * numAPC25 + 16 * numAPC16 + 8 * numAPC8), :]
         t2 = t2.transpose()
         t2 = t2.reshape(snLength, -1, 1, 8)
@@ -233,7 +282,7 @@ def SumUpAPCLUT(x):
 
     sum = sum25 + sum16 + sum8
 
-    return sum
+    return sum, sizePreprocessed, numAPC25, numAPC16, numAPC8
 
 
 '''
@@ -359,14 +408,25 @@ with open('snLookupTableNumAPC.pkl', 'rb') as input:
 # Initialize the graphs' data and parameters
 SN_length = 2048
 numSamples = 1000
-numBitstreams = 25 + 16 + 8
+numBitstreams = 5                 # 8bit-APC
+# numBitstreams = 8                 # 8bit-APC
+# numBitstreams = 15                # 16bit-APC
+# numBitstreams = 16                # 16bit-APC
+# numBitstreams = 24                # 25bit-APC
+# numBitstreams = 25                # 25bit-APC
+# numBitstreams = 25 + 5            # 25bit-APC + 8bit-APC
+# numBitstreams = 25 + 8            # 25bit-APC + 8bit-APC
+# numBitstreams = 25 + 15           # 25bit-APC + 16bit-APC
+# numBitstreams = 25 + 16           # 25bit-APC + 16bit-APC
+# numBitstreams = 25 + 24           # 25bit-APC + 25bit-APC
+# numBitstreams = 25 + 25           # 25bit-APC + 25bit-APC
+# numBitstreams = 25 + 25 + 5       # 25bit-APC + 25bit-APC + 8bit-APC
+# numBitstreams = 25 + 25 + 15      # 25bit-APC + 25bit-APC + 16bit-APC
+# numBitstreams = 25 + 25 + 25      # 25bit-APC + 25bit-APC + 25bit-APC
 result0 = np.zeros(numSamples)
 reference4 = np.zeros(numSamples)
 outputAPCInteger = np.zeros(numSamples)
 count = np.full(SN_length, 0)
-numAPC25 = int(numBitstreams / 25)
-numAPC16 = int((numBitstreams % 25) / 16)
-numAPC8 = int(((numBitstreams % 25) % 16) / 8)
 
 # get some random input values and sort them. These are going to be assigned to the x-axis
 values = np.zeros(numSamples)
@@ -387,7 +447,7 @@ for i in range(partialValues.shape[0]):
 
 # Add numbers using APCs
 for i in range(values.shape[0]):
-    count = SumUpAPCLUT(partialSNs[(i*numBitstreams):((i+1)*numBitstreams), 0:SN_length])
+    count, _, numAPC25, numAPC16, numAPC8 = SumUpAPCLUT(partialSNs[(i*numBitstreams):((i+1)*numBitstreams), 0:SN_length])
     # count = SumUpAPC25(partialSNs[(i*numBitstreams):((i+1)*numBitstreams), 0:SN_length],
     #                    SN_length,
     #                    numBitstreams)
