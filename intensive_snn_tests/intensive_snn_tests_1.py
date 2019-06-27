@@ -54,105 +54,17 @@ from keras.models import Sequential, Model
 from keras.layers import Dense, Dropout, Flatten, Activation
 from keras.layers import Conv2D, MaxPooling2D
 from keras import backend as K
-from keras import regularizers
 import WeightScaling_intensiveTests
-from keras.callbacks import Callback
 from keras.utils.generic_utils import get_custom_objects
 import numpy as np
 from snn.holayer import HOModel, HOMaxPoolingExact, HOMaxPoolingAprox, HOConvolution, HOConnected
 from snn.utils import HOUtils
 
-globalParameter = []
-globalParameter[:] = [10]
-
 # misc functions
 def first_layer_activation(x):
     #return K.tanh(x)
-    print("Relu as usual")
-    return K.relu(x)/ globalParameter[0]
-    #return x
+    return K.relu(x)/10
     #return K.tanh(x/2.5)
-
-def first_layer_activation_1(x):
-    print("Relu in callback")
-    #return K.tanh(x)
-    #print("Relu in callback")
-    return K.relu(x) / 5
-    # return K.tanh(x/2.5)
-
-class WeightScaleNo(Callback):
-
-    def on_batch_end(self, batch, logs=None):
-        pass
-        #weights_conv = self.model.get_layer(index=1).get_weights()
-        #weights_dense = self.model.get_layer(index=6).get_weights()
-        #weights_dense2 = self.model.get_layer(index=8).get_weights()
-        #maximum = 1
-        #for w in weights_conv:
-            #maximum = max(np.max(np.absolute(w)), maximum)
-        #for w in weights_dense:
-        #    maximum = max(np.max(np.absolute(w)), maximum)
-        #for w in weights_dense2:
-        #    maximum = max(np.max(np.absolute(w)), maximum)
-        #self.model.get_layer(index=1).set_weights([w/maximum for w in weights_conv])
-        #self.model.get_layer(index=6).set_weights([w/maximum for w in weights_dense])
-        #self.model.get_layer(index=8).set_weights([w/maximum for w in weights_dense2])
-
-
-class WeightScale(Callback):
-
-    def first_layer_activation_2(self, x):
-        # return K.tanh(x)
-        print("Relu in callback")
-        return K.relu(x) / 2
-        # return K.tanh(x/2.5)
-
-    def first_layer_activation_10(self, x):
-        # return K.tanh(x)
-        print("Relu in callback")
-        return K.relu(x) / 10
-        # return K.tanh(x/2.5)
-
-    def on_batch_end(self, batch, logs=None):
-        weights_conv = self.model.get_layer(index=1).get_weights()
-        weights_dense = self.model.get_layer(index=4).get_weights()
-        #weights_dense2 = self.model.get_layer(index=8).get_weights()
-        maximum = 0
-        for w in weights_conv:
-            maximum = max(np.max(np.absolute(w)), maximum)
-        for w in weights_dense:
-            maximum = max(np.max(np.absolute(w)), maximum)
-        #for w in weights_dense2:
-        #    maximum = max(np.max(np.absolute(w)), maximum)
-        self.model.get_layer(index=1).set_weights([w/maximum for w in weights_conv])
-        self.model.get_layer(index=4).set_weights([w/maximum for w in weights_dense])
-        #self.model.get_layer(index=8).set_weights([w/maximum for w in weights_dense2])
-
-        #print("on_batch_end")
-        #print(globalParameter)
-        globalParameter[:] = [10]
-
-        #print(globalParameter)
-        #get_custom_objects().update({'first_layer_activation_10': Activation(self.first_layer_activation_10)})
-        #self.model.pop()
-        #self.model.pop()
-        #self.model.pop()
-        #self.model.pop()
-        #self.model.pop()
-        #self.model.add(Activation('first_layer_activation_10'))
-        #self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        #self.model.add(Flatten())
-        #self.model.add(Dense(10)) # At the moment, the number of class is 10
-        #self.model.add(Activation('softmax'))
-        #layerGotten = self.model.get_layer(index=1)
-        #layerGotten.activation = first_layer_activation_1
-        #layerGotten.SetActivation(first_layer_activation_1)
-        #layerGotten.kernel_regularizer = regularizers.l1(1)
-        #layerGotten.input_shape = (10, 5)
-        #self.model.compile(loss=keras.losses.mse,
-        #              optimizer=keras.optimizers.Adadelta(),
-        #              metrics=['accuracy'])
-        #self.model.get_layer(index=4).activation = 'softmax'
 
 
 def createSN(x, length):
@@ -174,7 +86,7 @@ def stochtoint(x):
     """convert bipolar stochastic number to integer"""
     return (sum(x)/len(x))*2.0 - 1.0
 
-#get_custom_objects().update({'first_layer_activation': Activation(first_layer_activation)})
+get_custom_objects().update({'first_layer_activation': Activation(first_layer_activation)})
 
 np.set_printoptions(threshold=np.inf)
 
@@ -217,29 +129,25 @@ else:
 # Binary NN for reference
 model = Sequential()
 model.add(Conv2D(16, kernel_size=(3, 3),
-                 input_shape=input_shape,
-                 #kernel_regularizer=regularizers.l1(0.0001),
-                 activation=first_layer_activation))
-#model.add(Activation('first_layer_activation'))
+                 input_shape=input_shape))
+model.add(Activation('first_layer_activation'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Flatten())
-denseLayer = Dense(num_classes, activation= 'softmax')
-model.add(denseLayer)
-#model.add(Activation('softmax'))
+model.add(Dense(num_classes))
+model.add(Activation('softmax'))
 
 model.compile(loss=keras.losses.mse,
               optimizer=keras.optimizers.Adadelta(),
               metrics=['accuracy'])
 
-model.fit(x_train, y_train,
-          batch_size=batch_size,
-          epochs=epochs,
-          verbose=0,
-          callbacks=[WeightScaleNo()],
-          validation_data=(x_test, y_test))
-
-model.save_weights('v6.1_test_result_IntensiveTests_1_l1regularization_changeRelu_1stModel.h5')
-#model.load_weights('v6.1_test_result_IntensiveTests_1_l1regularization_changeRelu_1stModel.h5')
+#model.fit(x_train, y_train,
+#          batch_size=batch_size,
+#          epochs=epochs,
+#          verbose=0,
+#          callbacks=[WeightScaling_intensiveTests.WeightScale()],
+#          validation_data=(x_test, y_test))
+#model.save_weights('v6.1_test_result_IntensiveTests_1.h5')
+model.load_weights('v6.1_test_result_IntensiveTests_1.h5')
 score = model.evaluate(x_test[:500], y_test[:500], verbose=0)
 print('Test loss:', score[0])
 print('Test accuracy:', score[1])
@@ -251,119 +159,11 @@ layer1model = Model(inputs=model.input, outputs=model.get_layer(index=1).output)
 layer2model = Model(inputs=model.input, outputs=model.get_layer(index=2).output)
 layer3model = Model(inputs=model.input, outputs=model.get_layer(index=3).output)
 layer4model = Model(inputs=model.input, outputs=model.get_layer(index=4).output)
-#layer5model = Model(inputs=model.input, outputs=model.get_layer(index=5).output)
-#layer6model = Model(inputs=model.input, outputs=model.get_layer(index=6).output)
+layer5model = Model(inputs=model.input, outputs=model.get_layer(index=5).output)
+layer6model = Model(inputs=model.input, outputs=model.get_layer(index=6).output)
 #layer7model = Model(inputs=model.input, outputs=model.get_layer(index=7).output)
 #layer8model = Model(inputs=model.input, outputs=model.get_layer(index=8).output)
 #layer9model = Model(inputs=model.input, outputs=model.get_layer(index=9).output)
-
-
-################### For debugging purpose, save the intermidiate results in the local variable ###################
-# Predict the intermediate results from the Binary Neural Network
-BNN_prediction = layer1model.predict(np.asarray([x_test[0]]))
-txtTitle = 'v6.1_intensive_snn_tests1_conv_BNN_1st_model' + str(0 + 1) + '.txt'
-with open(txtTitle, 'w') as outfile:
-    # I'm writing a header here just for the sake of readability
-    # Any line starting with "#" will be ignored by numpy.loadtxt
-    outfile.write('# Array shape: {0}\n'.format(BNN_prediction[0].shape))
-
-    # Iterating through a ndimensional array produces slices along
-    # the last axis. This is equivalent to data[i,:,:] in this case
-    for data_slice in BNN_prediction[0]:
-        # The formatting string indicates that I'm writing out
-        # the values in left-justified columns 7 characters in width
-        # with 2 decimal places.
-        np.savetxt(outfile, data_slice, fmt='%-7.3f')
-
-        # Writing out a break to indicate different slices...
-        outfile.write('# New slice\n')
-
-del (BNN_prediction)
-###################################################################################################################
-
-ut = HOUtils()
-length = 1024
-# weights and biases of the convolutional layer
-#bias_SNs = ut.GetConvolutionLayerBiasesSN(model, 1, length)
-#weight_SNs = ut.GetConvolutionLayerWeightsSN(model, 1, length)
-
-# weights and biases of dense layer
-#dense_biases = ut.GetConnectedLayerBiases(model, 4)
-#dense_weight_SNs = ut.GetConnectedLayerWeightsSN(model, 4, length)
-
-# 2nd Model
-
-weights = model.get_layer(index=1).get_weights()
-del(model)
-
-#def my_init(shape, dtype=None):
-#    return K.random_normal(shape, dtype=dtype)
-model2 = Sequential()
-model2.add(Conv2D(16, kernel_size=(3, 3),
-                 input_shape=input_shape,
-                 #kernel_initializer = my_init,
-                 #kernel_regularizer=regularizers.l1(0.0001),
-                 activation=first_layer_activation_1))
-model2.get_layer(index=1).set_weights(weights)
-#model.add(Activation('first_layer_activation'))
-model2.add(MaxPooling2D(pool_size=(2, 2)))
-model2.add(Flatten())
-denseLayer = Dense(num_classes, activation= 'softmax')
-model2.add(denseLayer)
-
-model2.compile(loss=keras.losses.mse,
-              optimizer=keras.optimizers.Adadelta(),
-              metrics=['accuracy'])
-
-model2.fit(x_train, y_train,
-          batch_size=batch_size,
-          epochs=epochs,
-          verbose=0,
-          callbacks=[WeightScale()],
-          validation_data=(x_test, y_test))
-
-model2.save_weights('v6.1_test_result_IntensiveTests_1_l1regularization_changeRelu_2ndModel.h5')
-#model2.load_weights('v6.1_test_result_IntensiveTests_1_l1regularization_changeRelu_2ndModel.h5')
-score = model2.evaluate(x_test[:500], y_test[:500], verbose=0)
-print('Test loss:', score[0])
-print('Test accuracy:', score[1])
-score = model2.evaluate(x_test[:107], y_test[:107], verbose=0)
-print('Test loss:', score[0])
-print('Test accuracy:', score[1])
-
-layer1model = Model(inputs=model2.input, outputs=model2.get_layer(index=1).output)
-layer2model = Model(inputs=model2.input, outputs=model2.get_layer(index=2).output)
-layer3model = Model(inputs=model2.input, outputs=model2.get_layer(index=3).output)
-layer4model = Model(inputs=model2.input, outputs=model2.get_layer(index=4).output)
-#layer5model = Model(inputs=model.input, outputs=model.get_layer(index=5).output)
-#layer6model = Model(inputs=model.input, outputs=model.get_layer(index=6).output)
-#layer7model = Model(inputs=model.input, outputs=model.get_layer(index=7).output)
-#layer8model = Model(inputs=model.input, outputs=model.get_layer(index=8).output)
-#layer9model = Model(inputs=model.input, outputs=model.get_layer(index=9).output)
-
-
-################### For debugging purpose, save the intermidiate results in the local variable ###################
-# Predict the intermediate results from the Binary Neural Network
-BNN_prediction = layer1model.predict(np.asarray([x_test[0]]))
-txtTitle = 'v6.1_intensive_snn_tests1_conv_BNN_2nd_model' + str(0 + 1) + '.txt'
-with open(txtTitle, 'w') as outfile:
-    # I'm writing a header here just for the sake of readability
-    # Any line starting with "#" will be ignored by numpy.loadtxt
-    outfile.write('# Array shape: {0}\n'.format(BNN_prediction[0].shape))
-
-    # Iterating through a ndimensional array produces slices along
-    # the last axis. This is equivalent to data[i,:,:] in this case
-    for data_slice in BNN_prediction[0]:
-        # The formatting string indicates that I'm writing out
-        # the values in left-justified columns 7 characters in width
-        # with 2 decimal places.
-        np.savetxt(outfile, data_slice, fmt='%-7.3f')
-
-        # Writing out a break to indicate different slices...
-        outfile.write('# New slice\n')
-
-del (BNN_prediction)
-###################################################################################################################
 
 # Hybrid NN with stochastic convolutional layer and binary dense layer
 
@@ -374,12 +174,12 @@ length = 1024
 ut = HOUtils()
 
 # weights and biases of the convolutional layer
-bias_SNs = ut.GetConvolutionLayerBiasesSN(model2, 1, length)
-weight_SNs = ut.GetConvolutionLayerWeightsSN(model2, 1, length)
+bias_SNs = ut.GetConvolutionLayerBiasesSN(model, 1, length)
+weight_SNs = ut.GetConvolutionLayerWeightsSN(model, 1, length)
 
 # weights and biases of dense layer
-dense_biases = ut.GetConnectedLayerBiases(model2, 4)
-dense_weight_SNs = ut.GetConnectedLayerWeightsSN(model2, 4, length)
+dense_biases = ut.GetConnectedLayerBiases(model, 5)
+dense_weight_SNs = ut.GetConnectedLayerWeightsSN(model, 5, length)
 
 #SN_input_matrix = np.full((img_rows, img_cols, length), False)
 
@@ -429,7 +229,7 @@ for r in range(10):
     del(conv_output)
 
     # Predict the intermediate results from the Binary Neural Network
-    BNN_prediction = layer1model.predict(np.asarray([x_test[test_index]]))
+    BNN_prediction = layer2model.predict(np.asarray([x_test[test_index]]))
 
     # Write the array to disk
     txtTitle = 'v6.1_intensive_snn_tests1_conv_SNN_' + str(test_index+1) + '.txt'
@@ -469,7 +269,6 @@ for r in range(10):
 
     del(BNN_prediction)
     ###################################################################################################################
-
     print('conv layer done')
 
     # max pooling layer
@@ -529,7 +328,6 @@ for r in range(10):
             outfile.write('# New slice\n')
     del(BNN_prediction)
     ###################################################################################################################
-
     print('max pool layer done')
 
     # First dense layer

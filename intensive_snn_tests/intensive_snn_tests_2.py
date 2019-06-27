@@ -62,7 +62,6 @@ from keras.models import Sequential, Model
 from keras.layers import Dense, Dropout, Flatten, Activation
 from keras.layers import Conv2D, MaxPooling2D
 from keras import backend as K
-from keras import regularizers
 import WeightScaling_intensiveTests
 from keras.utils.generic_utils import get_custom_objects
 import numpy as np
@@ -139,8 +138,7 @@ else:
 model = Sequential()
 model.add(Conv2D(3, kernel_size=(4, 4),
                  input_shape=input_shape,
-                 use_bias=False,
-                 kernel_regularizer=regularizers.l1(0.001)))
+                 use_bias=False))
 model.add(Activation('first_layer_activation'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Flatten())
@@ -157,8 +155,8 @@ model.compile(loss=keras.losses.mse,
 #          verbose=0,
 #          callbacks=[WeightScaling_intensiveTests.WeightScale()],
 #          validation_data=(x_test, y_test))
-#model.save_weights('v6.2_test_result_IntensiveTests_2_tanh0_7_l2regularization.h5')
-model.load_weights('v6.2_test_result_IntensiveTests_2_tanh0_7_l2regularization.h5')
+#model.save_weights('v6.2_test_result_IntensiveTests_2_tanh0_7.h5')
+model.load_weights('v6.2_test_result_IntensiveTests_2_tanh0_7.h5')
 score = model.evaluate(x_test[:500], y_test[:500], verbose=0)
 print('Test loss:', score[0])
 print('Test accuracy:', score[1])
@@ -176,161 +174,6 @@ layer6model = Model(inputs=model.input, outputs=model.get_layer(index=6).output)
 #layer8model = Model(inputs=model.input, outputs=model.get_layer(index=8).output)
 #layer9model = Model(inputs=model.input, outputs=model.get_layer(index=9).output)
 
-
-
-################### For debugging purpose, save the intermidiate results in the local variable ###################
-# Predict the intermediate results from the Binary Neural Network
-BNN_prediction = layer2model.predict(np.asarray([x_test[0]]))
-txtTitle = 'v6.2_intensive_snn_tests2_conv_BNN_1st_model' + str(0 + 1) + '.txt'
-with open(txtTitle, 'w') as outfile:
-    # I'm writing a header here just for the sake of readability
-    # Any line starting with "#" will be ignored by numpy.loadtxt
-    outfile.write('# Array shape: {0}\n'.format(BNN_prediction[0].shape))
-
-    # Iterating through a ndimensional array produces slices along
-    # the last axis. This is equivalent to data[i,:,:] in this case
-    for data_slice in BNN_prediction[0]:
-        # The formatting string indicates that I'm writing out
-        # the values in left-justified columns 7 characters in width
-        # with 2 decimal places.
-        np.savetxt(outfile, data_slice, fmt='%-7.3f')
-
-        # Writing out a break to indicate different slices...
-        outfile.write('# New slice\n')
-
-del (BNN_prediction)
-###################################################################################################################
-
-ut = HOUtils()
-length = 1024
-# weights and biases of the convolutional layer
-#bias_SNs = ut.GetConvolutionLayerBiasesSN(model, 1, length)
-weight_SNs = ut.GetConvolutionLayerWeightsSN(model, 1, length, 1)
-del(weight_SNs)
-
-
-# 2nd Model
-
-weights = model.get_layer(index=1).get_weights()
-del(model)
-
-# Alter the weights
-#print(weights)
-#print(weights[0])
-#print(weights[0][0])
-#print(weights[0][0][0])
-#print(weights[0][0][0][0])
-
-#k=1
-#for i in range(4):
-#    for j in range(4):
-#        weights[0][i][j][0][k+1] = weights[0][i][j][0][k]
-
-# Define the buffer of weights
-tempListWeights = [[[] for i in range(4)] for i in range(4)]
-
-# Copy the target sparse weights into the buffer
-k=1
-for i in range(4):
-    for j in range(4):
-        tempListWeights[i][j] = weights[0][i][j][0][k]
-print(tempListWeights)
-
-# Flatten the list using a nested list comprehension
-listWeightsShuffled = [w for sublist in tempListWeights for w in sublist]
-
-# Permute the weights in the list
-listWeightsShuffled = np.random.permutation(listWeightsShuffled)
-
-# Insert shuffled weights into the target
-for i in range(4):
-    for j in range(4):
-        weights[0][i][j][0][k+1] = listWeightsShuffled[i*4+j]
-
-
-#weights = [np.random.permutation(w.flat).reshape(w.shape) for w in weights]
-#weights = [np.random.permutation(w) for w in weights]
-print("altered weights")
-print(weights)
-
-################### For debugging purpose, save the weigts in txt format #######################################
-txtTitle = 'altered weights.txt'
-with open(txtTitle, 'w') as outfile:
-    # I'm writing a header here just for the sake of readability
-    # Any line starting with "#" will be ignored by numpy.loadtxt
-    #outfile.write('# Array shape: {0}\n'.format(weights.shape))
-    outfile.write('{0}'.format(weights))
-################################################################################################################
-
-model2 = Sequential()
-model2.add(Conv2D(3, kernel_size=(4, 4),
-                 input_shape=input_shape,
-                 use_bias=False,
-                 kernel_regularizer=regularizers.l1(0.001)))
-model2.get_layer(index=1).set_weights(weights)
-model2.add(Activation('first_layer_activation'))
-model2.add(MaxPooling2D(pool_size=(2, 2)))
-model2.add(Flatten())
-model2.add(Dense(num_classes, use_bias=False))
-model2.add(Activation('softmax'))
-
-model2.compile(loss=keras.losses.mse,
-              optimizer=keras.optimizers.Adadelta(),
-              metrics=['accuracy'])
-
-model2.fit(x_train, y_train,
-          batch_size=batch_size,
-          epochs=epochs,
-          verbose=0,
-          callbacks=[WeightScaling_intensiveTests.WeightScale()],
-          validation_data=(x_test, y_test))
-
-model2.save_weights('v6.2_test_result_IntensiveTests_2_tanh0_7_l2regularization_2ndModel.h5')
-#model2.load_weights('v6.2_test_result_IntensiveTests_2_tanh0_7_l2regularization_2ndModel.h5')
-score = model2.evaluate(x_test[:500], y_test[:500], verbose=0)
-print('Test loss:', score[0])
-print('Test accuracy:', score[1])
-score = model2.evaluate(x_test[:107], y_test[:107], verbose=0)
-print('Test loss:', score[0])
-print('Test accuracy:', score[1])
-
-layer1model = Model(inputs=model2.input, outputs=model2.get_layer(index=1).output)
-layer2model = Model(inputs=model2.input, outputs=model2.get_layer(index=2).output)
-layer3model = Model(inputs=model2.input, outputs=model2.get_layer(index=3).output)
-layer4model = Model(inputs=model2.input, outputs=model2.get_layer(index=4).output)
-#layer5model = Model(inputs=model.input, outputs=model.get_layer(index=5).output)
-#layer6model = Model(inputs=model.input, outputs=model.get_layer(index=6).output)
-#layer7model = Model(inputs=model.input, outputs=model.get_layer(index=7).output)
-#layer8model = Model(inputs=model.input, outputs=model.get_layer(index=8).output)
-#layer9model = Model(inputs=model.input, outputs=model.get_layer(index=9).output)
-
-
-################### For debugging purpose, save the intermidiate results in the local variable ###################
-# Predict the intermediate results from the Binary Neural Network
-BNN_prediction = layer2model.predict(np.asarray([x_test[0]]))
-txtTitle = 'v6.2_intensive_snn_tests2_conv_BNN_2nd_model' + str(0 + 1) + '.txt'
-with open(txtTitle, 'w') as outfile:
-    # I'm writing a header here just for the sake of readability
-    # Any line starting with "#" will be ignored by numpy.loadtxt
-    outfile.write('# Array shape: {0}\n'.format(BNN_prediction[0].shape))
-
-    # Iterating through a ndimensional array produces slices along
-    # the last axis. This is equivalent to data[i,:,:] in this case
-    for data_slice in BNN_prediction[0]:
-        # The formatting string indicates that I'm writing out
-        # the values in left-justified columns 7 characters in width
-        # with 2 decimal places.
-        np.savetxt(outfile, data_slice, fmt='%-7.3f')
-
-        # Writing out a break to indicate different slices...
-        outfile.write('# New slice\n')
-
-del (BNN_prediction)
-###################################################################################################################
-
-
-
-
 # Hybrid NN with stochastic convolutional layer and binary dense layer
 
 # SN length
@@ -341,11 +184,11 @@ ut = HOUtils()
 
 # weights and biases of the convolutional layer
 #bias_SNs = ut.GetConvolutionLayerBiasesSN(model, 1, length)
-weight_SNs = ut.GetConvolutionLayerWeightsSN(model2, 1, length, 2)
+weight_SNs = ut.GetConvolutionLayerWeightsSN(model, 1, length)
 
 # weights and biases of dense layer
 #dense_biases = ut.GetConnectedLayerBiases(model, 5)
-dense_weight_SNs = ut.GetConnectedLayerWeightsSN(model2, 5, length)
+dense_weight_SNs = ut.GetConnectedLayerWeightsSN(model, 5, length)
 
 #SN_input_matrix = np.full((img_rows, img_cols, length), False)
 

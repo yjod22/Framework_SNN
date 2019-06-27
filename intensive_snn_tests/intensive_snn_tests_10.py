@@ -215,7 +215,7 @@ for r in range(10):
     hoConvLayer = HOConvolution(3, 3, length, baseMode="Mux", activationFunc="Relu")
     hoModel.Activation(hoConvLayer, stride=1)
     del(hoConvLayer)
-    '''
+
     ################### For debugging purpose, save the intermidiate results in the local variable ###################
     # Extract the intermediate results from the model
     conv_output = hoModel.GetOutputMatrix()
@@ -269,14 +269,13 @@ for r in range(10):
 
     del(BNN_prediction)
     ###################################################################################################################
-    '''
     print('conv layer done')
 
     # max pooling layer
     hoMaxLayer = HOMaxPoolingExact(2, 2, length)
     hoModel.Activation(hoMaxLayer, stride=2) # Stride:2, filterSize:2x2
     del(hoMaxLayer)
-    '''
+
     ################### For debugging purpose, save the intermidiate results into the externel files ###################
     # Extract the intermediate results from the model
     maxpool_output = hoModel.GetOutputMatrix()
@@ -329,7 +328,6 @@ for r in range(10):
             outfile.write('# New slice\n')
     del(BNN_prediction)
     ###################################################################################################################
-    '''
     print('max pool layer done')
 
     # First dense layer
