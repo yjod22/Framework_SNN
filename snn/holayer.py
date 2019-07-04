@@ -17,6 +17,16 @@
 # History
 ################################################################################
 # File:		   holayer.py
+# Version:     14.0
+# Author/Date: Junseok Oh / 2019-07-01
+# Change:      (SCR_V13.0-1): Place CreateSN on the higher class
+#              (SCR_V13.0-2): Place StochToInt on the higher class
+#              (SCR_V13.0-4): Make snLength on the higher class
+#              (SCR_V13.0-5): Remove unnecessary codes and comments
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
+# File:		   holayer.py
 # Version:     13.0
 # Author/Date: Junseok Oh / 2019-06-30
 # Change:      (SCR_V12.0-1): Set scale factor of activation functions by users
@@ -52,10 +62,10 @@
 # Version:     9.0
 # Author/Date: Junseok Oh / 2019-06-07
 # Change:      (SCR_V8.0-2): Fix bug of set the state in ActivationFuncTanhSN
-#			   (SCR_V8.0-3): develop LUT-based APC
-#			   (SCR_V8.0-4): develop 8bit APC
-#			   (SCR_V8.0-5): Increase dimension readability by shape
-#			   (SCR_V8.0-6): Apply LUT-based techniques in dense layer
+#              (SCR_V8.0-3): develop LUT-based APC
+#              (SCR_V8.0-4): develop 8bit APC
+#              (SCR_V8.0-5): Increase dimension readability by shape
+#              (SCR_V8.0-6): Apply LUT-based techniques in dense layer
 # Cause:       Performance improvements
 # Initiator:   Junseok Oh
 ################################################################################
@@ -63,11 +73,11 @@
 # Version:     8.0
 # Author/Date: Junseok Oh / 2019-05-23
 # Change:      (SCR_V6.4-1): NN Optimization-JSO (Make use of listIndex not to consider zero weights in addition)
-#			   (SCR_V6.4-2): Fix bug in the number of states in the ActivationFuncTanhSN
-#			   (SCR_V6.4-9): Update Stanh with LUT for adaptive function
-#			   (SCR_V6.4-11): Fix bug of bias missing (use_bias = 'True')
-#			   (SCR_V6.4-13): Update HOModel initialization
-#			   (SCR_V6.4-24): Skip convolution if the weights are all zero
+#              (SCR_V6.4-2): Fix bug in the number of states in the ActivationFuncTanhSN
+#              (SCR_V6.4-9): Update Stanh with LUT for adaptive function
+#              (SCR_V6.4-11): Fix bug of bias missing (use_bias = 'True')
+#              (SCR_V6.4-13): Update HOModel initialization
+#              (SCR_V6.4-24): Skip convolution if the weights are all zero
 # Cause:       -
 # Initiator:   Florian Neugebauer
 ################################################################################
@@ -145,10 +155,10 @@
 # Version:     5.2 (SCR_V5.1-3)
 # Author/Date: Junseok Oh / 2018-10-28
 # Change:      Change name of numClasses to numOutputClasses
-#			   Create new variable numInputClasses and flagFullyConnected
-#			   If the layer has been connected, 
-#			   then, it generates the SN, reshapes the format,
-#				     and every inputClasses are forwarded as the inputs
+#              Create new variable numInputClasses and flagFullyConnected
+#              If the layer has been connected,
+#              then, it generates the SN, reshapes the format,
+#                    and every inputClasses are forwarded as the inputs
 # Cause:       Multiple Fully Connected layers should be possible
 # Initiator:   Florian Neugebauer
 ################################################################################
@@ -161,8 +171,8 @@
 # Version:     5.1 (SCR_V5.0-1)
 # Author/Date: Junseok Oh / 2018-10-02
 # Change:	   Assign the layer ID (Convolution, MaxPooling, and FullyConnected)
-#			   Define the numInputPlanes and numOutputPlanes
-#			   Forward the whole planes as inputs for the Convolution layer
+#              Define the numInputPlanes and numOutputPlanes
+#              Forward the whole planes as inputs for the Convolution layer
 # Cause:       The number of slices has to be variable
 # Initiator:   Florian Neugebauer
 ################################################################################
@@ -203,15 +213,15 @@
 # Version:     1.2 (SCR_V1.1-2)
 # Author/Date: Junseok Oh / 2018-07-06
 # Change:	   Change the conditions of the iteration in Activation
-#			   so that it doesn't access an invalid index of input Matrix
+#              so that it doesn't access an invalid index of input Matrix
 # Cause:       Bug that it failed to Activate when stride is set to 1
 # Initiator:   Junseok Oh
 ################################################################################ 
 # Version:     1.2 (SCR_V1.1-1)
 # Author/Date: Junseok Oh / 2018-07-06
 # Change:      Create the only one object of HOMaxPooling at the initial phase
-#			   Set the new Stochastic Numbers over the iteration
-#			   Create SetListSN in HOMaxPooling class
+#              Set the new Stochastic Numbers over the iteration
+#              Create SetListSN in HOMaxPooling class
 # Cause:       Improve Activation performance
 # Initiator:   Junseok Oh
 ################################################################################ 
@@ -233,8 +243,9 @@ from functools import reduce
 import operator
 import copy
 import pickle
+from snn.snn import HOSnn
 
-class HOLayer(object):
+class HOLayer(HOSnn):
     def __call__(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, **kwargs):
         output = self.Call(inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, **kwargs)
         return output
@@ -249,8 +260,10 @@ class HOLayer(object):
     def GetLayerID(self):
         return self.layerID
 
-class HOModel(object):
-    def __init__(self, inputMatrix):
+class HOModel(HOSnn):
+    def __init__(self, inputMatrix, **kwargs):
+        super().__init__(**kwargs)
+
         # Calibration values
         self.padding = 0
 
@@ -258,7 +271,6 @@ class HOModel(object):
         self.numInputPlanes = 1
         self.numOutputPlanes = 1
         self.inputWidth = int(inputMatrix.size / inputMatrix[0].size)
-        self.snLength = int(inputMatrix[0][0].size)
 
         self.filterSize = 0
         self.stride = 0
@@ -281,7 +293,6 @@ class HOModel(object):
         self.SetCopiedMatrix(self.numInputPlanes, self.inputWidth, self.snLength)
 
         # Copy inputMatrix into the multi-dimensional copiedMatrix
-        #inputMatrix.reshape(inputMatrix.shape + (1,))
         self.copiedMatrix[:] = inputMatrix.reshape(1, 1, self.inputWidth, self.inputWidth, self.snLength)[:]
 
         # Initialized weights and bias
@@ -370,20 +381,17 @@ class HOModel(object):
         self.layerID = holayer.GetLayerID()
 
         # If it is the first activation of the model, then skip the followings
-		# Otherwise, it will change the current output Matrix as the input Matrix
+        # Otherwise, it will change the current output Matrix as the input Matrix
         self.IncrementCntLayer()
         if(self.GetCntLayer() > 1):
 
             # If the layer has been fully connected, then it generates the SN and reshapes the format
             # e.g. (1, 10) -> SN generation -> (10, 1024) -> reshape -> (10, 1, 1, 1024)
             if(self.flagFullyConnected == 1):
-                #tt = self.outputMatrix.size
-                #tt1 = self.outputMatrix[0].size
-                #tt2 = self.outputMatrix[0][0].size
                 self.numInputClasses = int(self.outputMatrix[0].size / self.outputMatrix[0][0].size)
                 resMatrix = np.full((self.numInputClasses, self.snLength), False)
                 for i in range(self.numInputClasses):
-                    resMatrix[i] = self.CreateSN(self.outputMatrix[0, i], self.snLength)
+                    resMatrix[i] = self.CreateSN(self.outputMatrix[0, i])
                 self.SetCopiedMatrix(self.numInputClasses, 1, self.snLength)
                 self.copiedMatrix = resMatrix.reshape(self.numInputClasses, 1, 1, self.snLength)
 
@@ -394,7 +402,7 @@ class HOModel(object):
                 self.CopyMatrix()
 
         # Depending on the filter size and stride of the layer,
-		# it determines the OutputMatrix paramenters
+        # it determines the OutputMatrix paramenters
         # In the case of Fully connected layer, Determine filterSize and stride from inputWidth
         if(self.layerID == "FullyConnected"):
             self.filterSize = self.inputWidth
@@ -469,23 +477,11 @@ class HOModel(object):
         else:
             self.outputMatrix[ithPlane, row, col] = self.localResult[0]
 
-    def CreateSN(self, x, length):
-        """create bipolar SN by comparing random vector elementwise to SN value x"""
-        # rand = np.random.rand(length)*2.0 - 1.0
-        # x_SN = np.less(rand, x)
-        large = np.random.rand(1)
-        x_SN = np.full(length, False)
-        if large:
-            for i in range(int(np.ceil(((x + 1) / 2) * length))):
-                x_SN[i] = True
-        else:
-            for i in range(int(np.floor(((x + 1) / 2) * length))):
-                x_SN[i] = True
-        np.random.shuffle(x_SN)
-        return x_SN
 
 class HOActivation(HOLayer):
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
         # Set scale factor 1 as default
         self.scale = 1
 
@@ -530,7 +526,6 @@ class HOActivation(HOLayer):
             self.snLookupTableState = [ []for num in range(numScaleFactor)]
             for num in range(numScaleFactor):
                 self.snLookupTableElementsTemp = np.array(
-                    #[[self.GenerateLookupTableForSTanh(byte, state) for byte in range(256)] for state in range(32)])
                     [[self.GenerateLookupTableForSTanh(byte, state, (num+1)*2) for byte in range(256)] for state in range((num+1)*2)])
                 self.snLookupTableOut[num] = copy.deepcopy(self.snLookupTableElementsTemp[:, :, 0])
                 self.snLookupTableState[num] = copy.deepcopy(self.snLookupTableElementsTemp[:, :, 1])
@@ -572,8 +567,8 @@ class HOActivation(HOLayer):
 
         # Initialize the number of one
         numOne = 0
-		
-		# Count up the number of one if the bit is equal to 1
+
+        # Count up the number of one if the bit is equal to 1
         for j, bit in enumerate(x):
             if(bit == 1):
                 numOne = numOne +1
@@ -582,7 +577,6 @@ class HOActivation(HOLayer):
 
     def GenerateLookupTableForSTanh(self, byte, start_state, PAR_numState):
         # Set the number of states
-        #numState = 32
         numState = PAR_numState
 
         # Represent the decimal value into 8bit binary value
@@ -629,7 +623,6 @@ class HOActivation(HOLayer):
 
     def ActivationFuncTanhSN(self, x, PAR_numState):
         # the number of states
-        #numState = 32
         numState = PAR_numState*2
         # starting state
         state = max(int(numState/2)-1, 0)
@@ -647,8 +640,6 @@ class HOActivation(HOLayer):
             elif np.logical_not(x[j]) & (state > 0):
                 state = state - 1
             # No update at the start or end of the state
-        #print("after stanh")
-        #print(out)
 
         return out
 
@@ -695,7 +686,7 @@ class HOActivation(HOLayer):
                 sizePreprocessed = (25 * numAPC25) - size
                 snZeros = [[] for i in range(sizePreprocessed)]
                 for i in range(sizePreprocessed):
-                    snZeros[i] = self.CreateSN(0, snLength)
+                    snZeros[i] = self.CreateSN(0)
                 x = np.vstack((x, snZeros))
 
             # Remove the parts which are out of 25bit range
@@ -735,7 +726,7 @@ class HOActivation(HOLayer):
                 sizePreprocessed = (25 * numAPC25) - size + 16
                 snZeros = [[] for i in range(sizePreprocessed)]
                 for i in range(sizePreprocessed):
-                    snZeros[i] = self.CreateSN(0, snLength)
+                    snZeros[i] = self.CreateSN(0)
                 t1 = np.vstack((t1, snZeros))
 
             t1 = t1[25 * numAPC25:(25 * numAPC25 + 16 * numAPC16), :]
@@ -756,7 +747,7 @@ class HOActivation(HOLayer):
                 sizePreprocessed = (25 * numAPC25) - size + 8
                 snZeros = [[] for i in range(sizePreprocessed)]
                 for i in range(sizePreprocessed):
-                    snZeros[i] = self.CreateSN(0, snLength)
+                    snZeros[i] = self.CreateSN(0)
                 t2 = np.vstack((t2, snZeros))
 
             t2 = t2[(25 * numAPC25 + 16 * numAPC16):(25 * numAPC25 + 16 * numAPC16 + 8 * numAPC8), :]
@@ -775,51 +766,6 @@ class HOActivation(HOLayer):
 
         return sum, sizePreprocessed, numAPC25, numAPC16, numAPC8
 
-
-    def SumUpAPC(self, x, snLength, numAPC):
-        # sizeState = r
-        # snLength = m
-        sum = np.full(snLength, 0)
-
-        for j in range(snLength):
-            # Set the count number as 0
-            jthSum = 0
-
-            # Count the number of 1s on each column approximately
-            # and save the result in jthSum
-            for i in range(numAPC):
-                # AND, OR gates
-                a = (x[0 + 16 * i, j] | x[1 + 16 * i, j])
-                b = (x[2 + 16 * i, j] & x[3 + 16 * i, j])
-                c = (x[4 + 16 * i, j] | x[5 + 16 * i, j])
-                d = (x[6 + 16 * i, j] & x[7 + 16 * i, j])
-                e = (x[8 + 16 * i, j] | x[9 + 16 * i, j])
-                f = (x[10 + 16 * i, j] & x[11 + 16 * i, j])
-                z2 = (x[12 + 16 * i, j] | x[13 + 16 * i, j])
-                t0 = (x[14 + 16 * i, j] & x[15 + 16 * i, j])
-
-                # Full Adder 1 (Carry:x1, Sum:x2)
-                x1 = ((a & b) | (b & c) | (c & a))
-                x2 = ((a ^ b) ^ c)
-
-                # Full Adder 2 (Carry:y1, Sum:y2)
-                y1 = ((d & e) | (e & f) | (f & d))
-                y2 = ((d ^ e) ^ f)
-
-                # Full Adder 3 (Carry:z1, Sum:t1)
-                z1 = ((x2 & y2) | (y2 & z2) | (z2 & x2))
-                t1 = ((x2 ^ y2) ^ z2)
-
-                # Full Adder 4 (Carry:t3, Sum:t2)
-                t3 = ((x1 & y1) | (y1 & z1) | (z1 & x1))
-                t2 = ((x1 ^ y1) ^ z1)
-
-                # Represent in the binary format
-                jthSum = jthSum + 8 * t3 + 4 * t2 + 2 * t1 + 2 * t0
-
-            sum[j] = jthSum
-
-        return sum
 
     def Count2Integer(self, x, snLength, numAPC25, numAPC16, numAPC8):
         sumTotal = 0
@@ -919,29 +865,6 @@ class HOActivation(HOLayer):
         return y
 
 
-    def CreateSN(self, x, length):
-        """create bipolar SN by comparing random vector elementwise to SN value x"""
-        # rand = np.random.rand(length)*2.0 - 1.0
-        # x_SN = np.less(rand, x)
-        large = np.random.rand(1)
-        x_SN = np.full(length, False)
-        if large:
-            for i in range(int(np.ceil(((x + 1) / 2) * length))):
-                try:
-                    x_SN[i] = True
-                except IndexError:
-                    print("The number is out of range (-1, +1)")
-                    print("x: " + str(x))
-        else:
-            for i in range(int(np.floor(((x + 1) / 2) * length))):
-                try:
-                    x_SN[i] = True
-                except IndexError:
-                    print("The number is out of range (-1, +1)")
-                    print("x: " + str(x))
-        np.random.shuffle(x_SN)
-        return x_SN
-
 class HOMaxPooling(HOLayer):
     def Call(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, **kwargs):
         output = self.PoolingFunc(inputs)
@@ -967,11 +890,10 @@ class HOConn(HOActivation):
         raise NotImplementedError
 
 class HOConnected(HOConn):
-    def __init__(self, PAR_SnLength, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         self.SetLayerID("FullyConnected")
-        self.snLength = PAR_SnLength
         self.dense_output_SN = [0]
 
         # Select the way of transforming stochastic number to integer
@@ -984,52 +906,30 @@ class HOConnected(HOConn):
 
         # Flatten the inputs
         sizeTensor = numInputPlanes * sizeRow * sizeCol  # The total number of elements in the whole layer
-        #sizeTensor = int (inputs.size / inputs[0][0][0].size) # The total number of elements in the whole layer
         denseInputs = inputs.reshape((1, sizeTensor, self.snLength))
 
         self.dense_output_SN = np.full((numClasses, sizeTensor, self.snLength), False)
         self.dense_output = np.zeros((1, numClasses))
-        ################### For debugging purpose,  Create temporal variables ###################
-        #self.dense_output_BN = np.zeros((numClasses, sizeTensor))
-        #self.dense_output_binary = np.zeros((1, numClasses))
-        ################################################################################################################		
 
         # PRODUCT in the inner product operations
         for i in range(sizeTensor):
             for j in range(numClasses):
                 self.dense_output_SN[j, i] = np.logical_not(np.logical_xor(denseInputs[0, i], denseWeights[i, j]))
-        ################### For debugging purpose,  Perform PRODUCT operation using binary number ###################
-        #        self.dense_output_BN[j, i] = self.StochToInt(denseInputs[0, i]) * self.StochToInt(denseWeights[i, j])
-        ################################################################################################################
 
         # ADD in the inner product operations
-        ################### For debugging purpose,  Add all results of PRODUCTs using binary number ###################
-        #for i in range(numClasses):
-        #    for j in range(sizeTensor):
-        #        self.dense_output_binary[0, i] = self.dense_output_binary[0, i] + self.dense_output_BN[i, j]
-        ################################################################################################################
-
         if (self.stochToInt == "Normal"):
             for i in range(numClasses):
                 for j in range(sizeTensor):
                     self.dense_output[0, i] = self.dense_output[0, i] + self.StochToInt(self.dense_output_SN[i, j])
 
         elif (self.stochToInt == "APC"):
-            count = np.full(self.snLength, 0)
             for i in range(numClasses):
-                #self.dense_output[0, i] = self.APC(self.dense_output_SN[i], self.snLength, sizeTensor)
-                # count = self.SumUpAPC(self.dense_output_SN[i], self.snLength, numAPC)
                 count, _, numAPC25, numAPC16, numAPC8  = self.SumUpAPCLUT(self.dense_output_SN[i])
                 self.dense_output[0, i] = self.Count2Integer(count, self.snLength, numAPC25, numAPC16, numAPC8)
                 del(count)
 
         # Biasing
         self.dense_output = self.dense_output + denseBias
-        ################### For debugging purpose,  Add biases using binary number ###################
-        #self.dense_output_binary = self.dense_output_binary + denseBias
-        #print("For debugging purpose, dense_output using binary number are as follows")
-        #print(self.dense_output_binary)
-		################################################################################################################		
 
         # Activation function
         if (self.activationFunc == "Relu"):
@@ -1037,20 +937,16 @@ class HOConnected(HOConn):
                 self.dense_output[0][i] = self.ActivationFuncRelu(self.dense_output[0][i])
 
         elif (self.activationFunc == "Tanh"):
-            '''Not yet implemented'''
-            #self.dense_output = self.ActiavtionFuncTanh(self.dense_output)
+            '''Not implemented'''
             pass
         elif (self.activationFunc == "None"):
             pass
 
         return self.dense_output
 
-    def StochToInt(self, x):
-        """convert bipolar stochastic number to integer"""
-        return (sum(x) / len(x)) * 2.0 - 1.0
 
 class HOConvolution(HOConv):
-    def __init__(self, PAR_Row, PAR_Col, PAR_SnLength, **kwargs):
+    def __init__(self, PAR_Row, PAR_Col, **kwargs):
         super().__init__(**kwargs)
 
         # Select the base mode, MUX or APC
@@ -1063,8 +959,6 @@ class HOConvolution(HOConv):
         self.row = PAR_Row
         self.col = PAR_Col
         self.matrixSize = PAR_Row * PAR_Col
-        self.snLength = PAR_SnLength
-
 
         # Initialize the Convolution output
         self.listProductSN = 0
@@ -1072,14 +966,10 @@ class HOConvolution(HOConv):
         #self.convOutputDebug = np.zeros((1))
 
         # Create the Stochastic Number Zero
-        self.zeroSN = self.CreateSN(0, self.snLength)
+        self.zeroSN = self.CreateSN(0)
 
     def GetFilterSize(self):
         return self.row
-
-    def StochToInt(self, x):
-        """convert bipolar stochastic number to integer"""
-        return (sum(x) / len(x)) * 2.0 - 1.0
 
     def ConvFunc(self, inputs, weights, bias, listIndex):
         numInputPlanes, sizeRow, sizeCol, snLength = inputs.shape
@@ -1092,8 +982,6 @@ class HOConvolution(HOConv):
 
         # Determine the size of tensors
         sizeTensor = sizeBias + (numInputPlanes * sizeRow * sizeCol)
-        # numInputPlanes = int (inputs.size / inputs[0].size) # The number of planes in the inputs
-        # sizeTensor = int(inputs.size / inputs[0][0][0].size) # it is equal to (numInputPlanes * self.matrixSize)
 
         # Initialize the Convolution output
         self.listProductSN = np.full((sizeTensor, self.snLength), False)
@@ -1121,6 +1009,7 @@ class HOConvolution(HOConv):
 
             # Do not skip convolution if an one of the weights is not zero
             if(sizeTensorCompact != 0):
+
                 # Generate random numbers that determine which input will be selected in the mux
                 r = np.random.randint(0, sizeTensorCompact, self.snLength)
 
@@ -1129,70 +1018,42 @@ class HOConvolution(HOConv):
                     s[i] = (r == i).astype(int)
                     # Sift out the values in the listProductSN over the snLength
                     self.convOutput[0] |= self.listProductSNCompact[i] & s[i]
+
             # Skip Convolution if the weights are all zero
             else:
                 self.convOutput[0] = self.zeroSN
 
         elif(self.baseMode == "APC"):
-            count = np.full(self.snLength, 0)
-            #numAPC = int((sizeTensor + sizeBias) / 16)
-            #count = self.SumUpAPC(self.listProductSN, self.snLength, numAPC)
             count, sizePreprocessed, _, _, _ = self.SumUpAPCLUT(self.listProductSN)
-            # Debugging purpose#######################################################
-            #if (numInputPlanes != 1):
-            #    self.convOutputDebug = self.Count2Integer(count, self.snLength, numAPC)
-            #    print(self.convOutputDebug)
-            #    self.convOutput[0] = self.CreateSN(self.convOutputDebug, self.snLength)
-            ##########################################################################
 
         # Activation function
         if(self.activationFunc == "Relu"):
-            #print("start Relu")
             self.convOutput[0] = self.ActivationFuncReluLUTSN(self.convOutput[0])
             #self.convOutput[0] = self.ActivationFuncReluSN(self.convOutput[0])
-            #print("end Relu")
+
         elif(self.activationFunc == "SCRelu"):
             self.convOutput[0] = self.UpDownCounterReLU(count, (sizeTensor+sizePreprocessed))
-            # Debugging purpose#######################################################
-            # numAPC25 = int(sizeTensor / 25)
-            # numAPC16 = int((sizeTensor % 25) / 16)
-            # numAPC8 = int(((sizeTensor % 25) % 16) / 8)
-            # tempInteger = np.zeros(1)
-            # tempInteger[0] = self.Count2Integer(count, self.snLength, numAPC25, numAPC16, numAPC8)
-            # if(tempInteger[0] > 1):
-            #     tempInteger[0] = 1
-            # elif(tempInteger[0] < -1):
-            #     tempInteger[0] = -1
-            # self.convOutput[0] = self.CreateSN(tempInteger[0], self.snLength)
-            ##########################################################################
 
         elif(self.activationFunc == "STanh"):
-            #print("start STanh")
             if(sizeTensorCompact != 0):
                 self.convOutput[0] = self.ActivationFuncSTanhLUTSN(self.convOutput[0], sizeTensorCompact, self.scale)
                 #self.convOutput[0] = self.ActivationFuncTanhSN(self.convOutput[0], sizeTensorCompact)
-            #print("end STanh")
+
         elif(self.activationFunc == "BTanh"):
-            # Debugging purpose#######################################################
-            #if (numInputPlanes == 1):
-            #    self.convOutput[0] = self.UpDownCounter(count, (sizeTensor + sizeBias),2 * (sizeTensor + sizeBias))  # 1/s = 1
-            #else:
-            #    pass
-            ##########################################################################
-            # self.convOutput[0] = self.UpDownCounter(count, (sizeTensor+sizePreprocessed), 2*(sizeTensor+sizePreprocessed)) # 1/s = 1
             self.convOutput[0] = self.UpDownCounter(count, (sizeTensor+sizePreprocessed), self.constantH, self.scale)
 
         return self.convOutput
 
 
 class HOMaxPoolingExact(HOMaxPooling):
-    def __init__(self, PAR_Row, PAR_Col, PAR_SnLength):
+    def __init__(self, PAR_Row, PAR_Col, **kwargs):
+        super().__init__(**kwargs)
+
         # parameter setting
         self.SetLayerID("MaxPooling")
         self.row = PAR_Row
         self.col = PAR_Col
         self.matrixSize = PAR_Row * PAR_Col
-        self.snLength = PAR_SnLength
 
         #andGates
         self.listOutput = []
@@ -1212,7 +1073,7 @@ class HOMaxPoolingExact(HOMaxPooling):
         # self.SetListSN(x)
 
         # Initialize the MaxPooling output
-        self.maxOutput = np.full((1, PAR_SnLength), False)
+        self.maxOutput = np.full((1, self.snLength), False)
 
     def GetFilterSize(self):
         return self.row
@@ -1255,7 +1116,9 @@ class HOMaxPoolingExact(HOMaxPooling):
         return self.maxOutput
 
 class HOMaxPoolingAprox(HOMaxPooling):
-    def __init__(self, PAR_Row, PAR_Col, PAR_SnLength, PAR_step):
+    def __init__(self, PAR_Row, PAR_Col, PAR_step, **kwargs):
+        super().__init__(**kwargs)
+
         # parameter setting
         self.SetLayerID("MaxPooling")
         self.row = PAR_Row
@@ -1263,8 +1126,7 @@ class HOMaxPoolingAprox(HOMaxPooling):
         self.matrixSize = PAR_Row * PAR_Col
         self.ithSN = np.random.rand(1) * (self.matrixSize-1)
         self.ithSN = int(np.ceil(self.ithSN[0]))
-        self.snLength = PAR_SnLength
-        self.numPartialSN = int (PAR_SnLength / PAR_step)
+        self.numPartialSN = int (self.snLength / PAR_step)
         self.step = PAR_step
 
         # Create objects
@@ -1277,10 +1139,9 @@ class HOMaxPoolingAprox(HOMaxPooling):
 
         # Extract Stochastic Number from the matrix x.
         self.listSN = []
-        #self.SetListSN(x)
 
         # Initialize the MaxPooling output
-        self.maxOutput = np.full((1, PAR_SnLength), False)
+        self.maxOutput = np.full((1, self.snLength), False)
 
     def GetFilterSize(self):
         return self.row
@@ -1326,7 +1187,6 @@ class Mux(object):
                 maxOutput[0][start:end] = listSN[i][start:end]
             else:
                 pass
-
 
     def SelectFirstBit(self, listSN, maxOutput, ithSN, step):
         maxOutput[0][0:step] = listSN[ithSN][0:step]

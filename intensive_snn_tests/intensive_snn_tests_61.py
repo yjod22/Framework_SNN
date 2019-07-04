@@ -17,6 +17,15 @@
 # History
 ################################################################################
 # File:		   intensive_snn_tests.py
+# Version:     14.0 
+# Author/Date: Junseok Oh / 2019-07-04
+# Change:      (SCR_V13.0-1): Place CreateSN on the higher class
+#              (SCR_V13.0-2): Place StochToInt on the higher class
+#              (SCR_V13.0-4): Make snLength on the higher class
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
+# File:		   intensive_snn_tests.py
 # Version:     12.0 
 # Author/Date: Junseok Oh / 2019-06-27
 # Change:      (SCR_V11.0-7): Change the whole sw structure
@@ -90,27 +99,6 @@ import copy
 # misc functions
 def first_layer_activation(x):
     return K.relu(x, max_value=1) # Clipped-ReLU
-
-
-def createSN(x, length):
-    """create bipolar SN by comparing random vector elementwise to SN value x"""
-    # rand = np.random.rand(length)*2.0 - 1.0
-    # x_SN = np.less(rand, x)
-    large = np.random.rand(1)
-    x_SN = np.full(length, False)
-    if large:
-        for i in range(int(np.ceil(((x+1)/2)*length))):
-            x_SN[i] = True
-    else:
-        for i in range(int(np.floor(((x+1)/2)*length))):
-            x_SN[i] = True
-    np.random.shuffle(x_SN)
-    return x_SN
-
-def stochtoint(x):
-    """convert bipolar stochastic number to integer"""
-    return (sum(x)/len(x))*2.0 - 1.0
-
 
 #get_custom_objects().update({'first_layer_activation': Activation(first_layer_activation)})
 
@@ -193,20 +181,21 @@ layer6model = global_variables.bnModel[5]
 # Hybrid NN with stochastic convolutional layer and binary dense layer
 
 # SN length
-length = 1024*4
+kBits = 10
+length = 2 ** kBits
 #length = 1024*4
 
-ut = HOUtils()
+ut = HOUtils(kBits=kBits)
 model = global_variables.bnModel.GetModel()
 global_variables.bnModel = 0
 
 # weights and biases of the convolutional layer
 #bias_1_SNs = ut.GetConvolutionLayerBiasesSN(model, 1, length)
 #weight_1_SNs = ut.GetConvolutionLayerWeightsSN(model, 1, length)
-weight_1_SNs, bias_1_SNs, listIndex1 = ut.GetConvolutionLayerWeightsBiasesSN(model, 1, length, Adaptive="False")
+weight_1_SNs, bias_1_SNs, listIndex1 = ut.GetConvolutionLayerWeightsBiasesSN(model, 1, Adaptive="False")
 
 dense_5_biases = ut.GetConnectedLayerBiases(model, 5)   
-dense_5_weight_SNs = ut.GetConnectedLayerWeightsSN(model, 5, length)
+dense_5_weight_SNs = ut.GetConnectedLayerWeightsSN(model, 5)
 
 output = np.zeros((1, 10))
 correct_predictions = 0
@@ -223,12 +212,12 @@ for r in range(30):
     SN_input_matrix = np.full((img_rows, img_cols, length), False)
     for i in range(img_rows):
         for j in range(img_cols):
-            SN_input_matrix[i, j] = createSN(x[0, i, j], length)
+            SN_input_matrix[i, j] = ut.CreateSN(x[0, i, j])
     del(x)
     print('inputs generated')
 
     # Generate the HOModel
-    hoModel = HOModel(SN_input_matrix)
+    hoModel = HOModel(SN_input_matrix, kBits=kBits)
     del(SN_input_matrix)
 
     # convolutional layer 1
@@ -237,7 +226,7 @@ for r in range(30):
     #hoModel.SetZeroBias(2)
     hoModel.SetListIndex(listIndex1)
     hoModel.SetBias(bias_1_SNs)
-    hoConvLayer = HOConvolution(2, 2, length, baseMode="APC", activationFunc="SCRelu", use_bias="True")
+    hoConvLayer = HOConvolution(2, 2, kBits=kBits, baseMode="APC", activationFunc="SCRelu", use_bias="True")
     hoModel.Activation(hoConvLayer, stride=1)
     del(hoConvLayer)
     print('conv layer 1 done')
@@ -249,7 +238,7 @@ for r in range(30):
         print(str(test_index + 1) + ' conv 1 layer results saved in txt format')
 
     # max pooling layer
-    hoMaxLayer = HOMaxPoolingExact(2, 2, length)
+    hoMaxLayer = HOMaxPoolingExact(2, 2, kBits=kBits)
     hoModel.Activation(hoMaxLayer, stride=2) # Stride:2, filterSize:2x2
     del(hoMaxLayer)
     print('max pool 1 done')
@@ -263,7 +252,7 @@ for r in range(30):
     hoModel.SetNumOutputPlanes(1) # The number of slices:1
     hoModel.SetDenseWeights(dense_5_weight_SNs)
     hoModel.SetDenseBias(dense_5_biases)
-    hoDenseLayer = HOConnected(length, stochToInt="APC", activationFunc="None", use_bias="True")
+    hoDenseLayer = HOConnected(kBits=kBits, stochToInt="APC", activationFunc="None", use_bias="True")
     hoModel.Activation(hoDenseLayer, num_classes=num_classes)
     del(hoDenseLayer)
     ################### For debugging purpose, save the intermidiate results in the local variable ###################

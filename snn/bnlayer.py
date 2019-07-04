@@ -27,7 +27,7 @@
 # Version:     9.0
 # Author/Date: Junseok Oh / 2019-06-07
 # Change:      (SCR_v8.0-7): Fix bug in finding the number of conv layers
-#			   (SCR_V8.0-9): Fix bug in GetModel
+#              (SCR_V8.0-9): Fix bug in GetModel
 # Cause:       bug fix
 # Initiator:   Junseok Oh
 ################################################################################
@@ -35,17 +35,17 @@
 # Version:     8.0
 # Author/Date: Junseok Oh / 2019-05-23
 # Change:      (SCR_v6.4-18): Created
-#			   (SCR_V6.4-20): Fix bug in std deviation
-#			   (SCR_V6.4-21): Re-train the model again if it fails
-#			   (SCR_V6.4-22): Create PlotCurrentWeights
-#			   (SCR_V6.4-23): Upgrade in replacing
-#			   (SCR_V6.4-27): Upgrade in replacing
-#			   (SCR_V6.4-28): Encapsulate the functions
-#			   (SCR_V6.4-30): Upgrade in replacing (use intMax, limit the number of iteration, load 1st model back when retraining fails)
-#			   (SCR_V6.4-37): Upgrade in replacing (the number of non-zero elements must be smaller than before, sign change after permutation)
-#			   (SCR_V6.4-38): Upgrade in replacing (user-defined the number of iteration, handle multiple layers)
-#			   (SCR_V6.4-40): Upgrade in replacing (use intAvg to determine further iteration)
-#			   (SCR_V6.4-41): Bug fix, Save and Load weights in / from 1st Model
+#              (SCR_V6.4-20): Fix bug in std deviation
+#              (SCR_V6.4-21): Re-train the model again if it fails
+#              (SCR_V6.4-22): Create PlotCurrentWeights
+#              (SCR_V6.4-23): Upgrade in replacing
+#              (SCR_V6.4-27): Upgrade in replacing
+#              (SCR_V6.4-28): Encapsulate the functions
+#              (SCR_V6.4-30): Upgrade in replacing (use intMax, limit the number of iteration, load 1st model back when retraining fails)
+#              (SCR_V6.4-37): Upgrade in replacing (the number of non-zero elements must be smaller than before, sign change after permutation)
+#              (SCR_V6.4-38): Upgrade in replacing (user-defined the number of iteration, handle multiple layers)
+#              (SCR_V6.4-40): Upgrade in replacing (use intAvg to determine further iteration)
+#              (SCR_V6.4-41): Bug fix, Save and Load weights in / from 1st Model
 # Cause:       new
 # Initiator:   Junseok Oh
 ###############################################################################

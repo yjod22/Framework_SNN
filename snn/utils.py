@@ -17,14 +17,22 @@
 # History
 ################################################################################
 # File:		   utils.py
+# Version:     14.0
+# Author/Date: Junseok Oh / 2019-07-01
+# Change:      (SCR_V13.0-1): Place CreateSN on the higher class
+#              (SCR_V13.0-2): Place StochToInt on the higher class
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
+# File:		   utils.py
 # Version:     8.0
 # Author/Date: Junseok Oh / 2019-05-23
 # Change:      (SCR_V6.4-1): NN Optimization-JSO (Make use of listIndex not to consider zero weights in addition)
-#			   (SCR_V6.4-4): Create SaveInTxtFormat function
-#			   (SCR_V6.4-12): Create GetConvolutionLayerWeightsBiasesSN for adaption 
-#			   (SCR_V6.4-16): Fix bug of weight ordering (weights[j, i, k, l])
-#			   (SCR_V6.4-19): Make use of the plotly
-#			   (SCR_V6.4-31): Exception handling when the number is out of range (-1, +1)
+#              (SCR_V6.4-4): Create SaveInTxtFormat function
+#              (SCR_V6.4-12): Create GetConvolutionLayerWeightsBiasesSN for adaption
+#              (SCR_V6.4-16): Fix bug of weight ordering (weights[j, i, k, l])
+#              (SCR_V6.4-19): Make use of the plotly
+#              (SCR_V6.4-31): Exception handling when the number is out of range (-1, +1)
 # Cause:       -
 # Initiator:   Florian Neugebauer
 ################################################################################
@@ -42,41 +50,21 @@ import operator
 from plotly import tools
 import plotly as py
 import plotly.graph_objs as go
+from snn.snn import HOSnn
 
-class HOUtils(object):
-	def __init__(self):
-		pass
+class HOUtils(HOSnn):
+	def __init__(self, **kwargs):
+		super().__init__(**kwargs)
 
-	def createSN(self, x, length):
-		"""create bipolar SN by comparing random vector elementwise to SN value x"""
-		# rand = np.random.rand(length)*2.0 - 1.0
-		# x_SN = np.less(rand, x)
-		large = np.random.rand(1)
-		x_SN = np.full(length, False)
-		if large:
-			for i in range(int(np.ceil(((x + 1) / 2) * length))):
-				try:
-					x_SN[i] = True
-				except IndexError:
-					print("The number is out of range (-1, +1)")
-					print("x: "+ str(x))
-		else:
-			for i in range(int(np.floor(((x + 1) / 2) * length))):
-				try:
-					x_SN[i] = True
-				except IndexError:
-					print("The number is out of range (-1, +1)")
-					print("x: "+ str(x))
-		np.random.shuffle(x_SN)
-		return x_SN
-
-
-	def GetConvolutionLayerWeightsBiasesSN(self, model, indexLayer, length, **kwargs):
+	def GetConvolutionLayerWeightsBiasesSN(self, model, indexLayer, **kwargs):
 		# Select the activation function to use
 		bAdaptive = "False"
 		for key in kwargs:
 			if (key == "Adaptive"):
 				bAdaptive = kwargs[key]
+
+		# Set the length of stochastic number
+		length = self.snLength
 
 		# Extract weights of convolution layer from model
 		weights = model.get_layer(index=indexLayer).get_weights()[0]
@@ -116,7 +104,7 @@ class HOUtils(object):
 				for k in range(height):
 					for l in range(width):
 						# Generate the stochastic numbers of the weights
-						weight_SNs[i, j, k, l] = self.createSN(res_weights[i, j, k, l], length)
+						weight_SNs[i, j, k, l] = self.CreateSN(res_weights[i, j, k, l])
 
 						if(bAdaptive == "True"):
 							# Make the list of Indices which indicate the positions of non-near-zero elements
@@ -127,7 +115,7 @@ class HOUtils(object):
 							listIndex[i].append(j * height * width + k * width + l)
 			if(bBias):
 				# Generate the stochastic numbers of the biases
-				bias_SNs[i] = self.createSN(biases[i], length)
+				bias_SNs[i] = self.CreateSN(biases[i])
 
 				# Generate the index of the bias in the list at the end
 				listIndex[i].append(width*height*inputSlices)
@@ -144,9 +132,12 @@ class HOUtils(object):
 		dense_weights = model.get_layer(index=indexLayer).get_weights()[0]
 		return dense_weights
 
-	def GetConnectedLayerWeightsSN(self, model, indexLayer, length):
+	def GetConnectedLayerWeightsSN(self, model, indexLayer):
 		# Extract weights of fully connected layer from model
 		dense_weights = model.get_layer(index=indexLayer).get_weights()[0]
+
+		# Set the length of stochastic number
+		length = self.snLength
 
 		# Create a variable for stochastic number of the weights
 		tensors = int(dense_weights.size / dense_weights[0].size)
@@ -156,7 +147,7 @@ class HOUtils(object):
 		# Create a stochastic number of the weights
 		for i in range(tensors):
 			for j in range(classes):
-				dense_weight_SNs[i, j] = self.createSN(dense_weights[i, j], length)
+				dense_weight_SNs[i, j] = self.CreateSN(dense_weights[i, j])
 
 		return dense_weight_SNs
 
@@ -183,9 +174,6 @@ class HOUtils(object):
 
 		return dense_output
 
-	def stochtoint(self, x):
-		"""convert bipolar stochastic number to integer"""
-		return (sum(x) / len(x)) * 2.0 - 1.0
 
 	def SaveInTxtFormat(self, title, testIndex, outputMatrix, inputSlices, row, col, layerNModel, xTest):
 		# Convert Stochastic number to Binary number
@@ -193,7 +181,7 @@ class HOUtils(object):
 		for i in range(inputSlices):
 			for j in range(row):
 				for k in range(col):
-					conv_out_test[i, j, k] = self.stochtoint(outputMatrix[i, j, k])
+					conv_out_test[i, j, k] = self.StochToInt(outputMatrix[i, j, k])
 
 		# Predict the intermediate results from the Binary Neural Network
 		BNN_prediction = layerNModel.predict(np.asarray([xTest[testIndex]]))
