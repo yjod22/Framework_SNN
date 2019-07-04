@@ -17,6 +17,14 @@
 # History
 ################################################################################
 # File:		   holayer.py
+# Version:     13.0
+# Author/Date: Junseok Oh / 2019-06-30
+# Change:      (SCR_V12.0-1): Set scale factor of activation functions by users
+#              (SCR_V12.0-2): Calibrate SCReLU
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
+# File:		   holayer.py
 # Version:     12.0
 # Author/Date: Junseok Oh / 2019-06-25
 # Change:      (SCR_V11.0-5): Update UpDownCounterReLU, UpDownCounter(half state's altered)
@@ -478,12 +486,22 @@ class HOModel(object):
 
 class HOActivation(HOLayer):
     def __init__(self, **kwargs):
+        # Set scale factor 1 as default
+        self.scale = 1
+
+        # Set constantH 0.8 as default
+        self.constantH = 0.8
+
         # Select the activation function to use
         for key in kwargs:
             if (key == "activationFunc"):
                 self.activationFunc = kwargs[key]
             if (key == "use_bias"):
                 self.use_bias = kwargs[key]
+            if (key == "scale"):
+                self.scale = kwargs[key]
+            if (key == "constantH"):
+                self.constantH = kwargs[key]
 
         # Generate the lookup table for 8bit, 16bit, and 25bit APC
         self.snLookupTableNumAPC8 = 0
@@ -586,17 +604,17 @@ class HOActivation(HOLayer):
 
         return (np.packbits(x)[0], state)
 
-    def ActivationFuncSTanhLUTSN(self, x, PAR_numState):
+    def ActivationFuncSTanhLUTSN(self, x, PAR_numState, PAR_scale):
         # Represent the binary value into the 1byte decimal value
         sn = np.packbits(x)
         out = np.empty_like(sn)
 
         # Set the number of states
-        numState = PAR_numState * 2
+        numState = PAR_numState * PAR_scale * 2
         state = max(int(numState/2) - 1, 0)
 
-        _snLookupTableOut = self.snLookupTableOut[PAR_numState-1]
-        _snLookupTableState = self.snLookupTableState[PAR_numState-1]
+        _snLookupTableOut = self.snLookupTableOut[PAR_numState*PAR_scale-1]
+        _snLookupTableState = self.snLookupTableState[PAR_numState*PAR_scale-1]
 
         for i, byte in enumerate(sn):
             # Find the element with the current state and byte information in the table
@@ -812,12 +830,19 @@ class HOActivation(HOLayer):
         ret = (sumTotal / snLength) * 2 - (25 * numAPC25) - (16 * numAPC16) - (8 * numAPC8)
         return ret
 
-    def UpDownCounter(self, x, sizeTensor, sizeState):
+    def UpDownCounter(self, x, sizeTensor, constantH, scale):
         # the parameter sizeTensor here refers to (sizeTensor+sizeBias)
 
         # len(x) = m
         # sizeTensor = n
+
         # sizeState = r
+        # scale = 1/s * constantH
+        # 1/s = 1 + (r'-2n)*(1-1.835*(2n)^-0.5552)/2/(n-1)
+        # r' = 2n + (-1+scale/constantH)*2*(n-1) / (1-1.835*(2n)^-0.5552)
+        # r = nearest_multiple_of_two(r')
+        sizeState = round((2*sizeTensor + (-1+scale/constantH)*2*(sizeTensor-1) / (1-1.835*(2*sizeTensor) ** -0.5552))/2)*2
+
         stateMax = sizeState - 1
         stateHalf = int(sizeState / 2) - 1
         stateCurrent = stateHalf
@@ -844,12 +869,19 @@ class HOActivation(HOLayer):
 
         return y
 
-    def UpDownCounterReLU(self, x, sizeTensor, sizeState):
+    def UpDownCounterReLU(self, x, sizeTensor, constantH=0.8, scale=1.232):
         # the parameter sizeTensor here refers to (sizeTensor+sizeBias)
 
         # len(x) = m
         # sizeTensor = n
+
         # sizeState = r
+        # scale = 1/s * constantH
+        # 1/s = 1 + (r'-2n)*(1-1.835*(2n)^-0.5552)/2/(n-1)
+        # r' = 2n + (-1+scale/constantH)*2*(n-1) / (1-1.835*(2n)^-0.5552)
+        # r = nearest_multiple_of_two(r')
+        sizeState = round((2*sizeTensor + (-1+scale/constantH)*2*(sizeTensor-1) / (1-1.835*(2*sizeTensor) ** -0.5552))/2)*2
+
         stateMax = sizeState - 1
         stateHalf = int(sizeState / 2) - 1
         stateCurrent = stateHalf
@@ -1120,7 +1152,7 @@ class HOConvolution(HOConv):
             #self.convOutput[0] = self.ActivationFuncReluSN(self.convOutput[0])
             #print("end Relu")
         elif(self.activationFunc == "SCRelu"):
-            self.convOutput[0] = self.UpDownCounterReLU(count, (sizeTensor+sizePreprocessed), 4*(sizeTensor+sizePreprocessed))
+            self.convOutput[0] = self.UpDownCounterReLU(count, (sizeTensor+sizePreprocessed))
             # Debugging purpose#######################################################
             # numAPC25 = int(sizeTensor / 25)
             # numAPC16 = int((sizeTensor % 25) / 16)
@@ -1137,7 +1169,7 @@ class HOConvolution(HOConv):
         elif(self.activationFunc == "STanh"):
             #print("start STanh")
             if(sizeTensorCompact != 0):
-                self.convOutput[0] = self.ActivationFuncSTanhLUTSN(self.convOutput[0], sizeTensorCompact)
+                self.convOutput[0] = self.ActivationFuncSTanhLUTSN(self.convOutput[0], sizeTensorCompact, self.scale)
                 #self.convOutput[0] = self.ActivationFuncTanhSN(self.convOutput[0], sizeTensorCompact)
             #print("end STanh")
         elif(self.activationFunc == "BTanh"):
@@ -1147,7 +1179,8 @@ class HOConvolution(HOConv):
             #else:
             #    pass
             ##########################################################################
-            self.convOutput[0] = self.UpDownCounter(count, (sizeTensor+sizePreprocessed), 2*(sizeTensor+sizePreprocessed)) # 1/s = 1
+            # self.convOutput[0] = self.UpDownCounter(count, (sizeTensor+sizePreprocessed), 2*(sizeTensor+sizePreprocessed)) # 1/s = 1
+            self.convOutput[0] = self.UpDownCounter(count, (sizeTensor+sizePreprocessed), self.constantH, self.scale)
 
         return self.convOutput
 

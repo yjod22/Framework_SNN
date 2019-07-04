@@ -17,6 +17,13 @@
 # History
 ################################################################################
 # File:		   test_LUTbased_APC.py
+# Version:     13.0
+# Author/Date: Junseok Oh / 2019-06-30
+# Change:      (SCR_V12.0-2): Calibrate SCReLU
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
+# File:		   test_LUTbased_APC.py
 # Version:     12.0
 # Author/Date: Junseok Oh / 2019-06-25
 # Change:      (SCR_V11.0-8): Refer to the class in holayer.py
@@ -95,14 +102,14 @@ def stochtoint(x):
 # Initialize the graphs' data and parameters
 SN_length = 2048
 numSamples = 1000
-numBitstreams =32
+numBitstreams =16
 # numStates = numBitstreams*4
 result = np.zeros(numSamples)
 reference = np.zeros(numSamples)
 reference0 = np.zeros(numSamples)
-reference1 = np.zeros(numSamples)
-reference2 = np.zeros(numSamples)
-reference3 = np.zeros(numSamples)
+# reference1 = np.zeros(numSamples)
+# reference2 = np.zeros(numSamples)
+# reference3 = np.zeros(numSamples)
 outputAPC = np.full((numSamples, SN_length), False)
 count = np.full(SN_length, 0)
 
@@ -130,27 +137,30 @@ hoActivation = HOActivation(activationFunc="default")
 for i in range(values.shape[0]):
     count, sizePreprocessed, numAPC25, numAPC16, numAPC8 = hoActivation.SumUpAPCLUT(partialSNs[(i*numBitstreams):((i+1)*numBitstreams),
                                                                                     0:SN_length])
-    outputAPC[i] = hoActivation.UpDownCounterReLU(count, numBitstreams+sizePreprocessed, (numBitstreams+sizePreprocessed)*4)
+    # outputAPC[i] = hoActivation.UpDownCounterReLU(count, numBitstreams+sizePreprocessed, (numBitstreams+sizePreprocessed)*4)
+    # outputAPC[i] = hoActivation.UpDownCounterReLU(count, numBitstreams+sizePreprocessed, hoActivation.constantH, hoActivation.scale)
+    outputAPC[i] = hoActivation.UpDownCounterReLU(count, numBitstreams+sizePreprocessed)
 
 # Calculate the graphs' data that are going to be assigned to the y-axis
 for i in range(values.shape[0]):
     result[i] = stochtoint(outputAPC[i])
     reference[i] = min(max(0, values[i]), 1) # Clipped-ReLU
-    reference0[i] = np.tanh(values[i]*1.84)
-    reference1[i] = np.tanh(values[i]*1.29)
-    reference2[i] = np.tanh(values[i])
-    reference3[i] = np.tanh(values[i]*0.7)
+    reference0[i] = np.tanh(values[i]*1.232)
+    # reference1[i] = np.tanh(values[i]*1.29)
+    # reference2[i] = np.tanh(values[i])
+    # reference3[i] = np.tanh(values[i]*0.7)
 
 # Assign the graphs' data to x-axis and y-axis
 SCReLU = go.Scatter(x=values, y=result, mode='markers', name='SCReLU')
 ReLU = go.Scatter(x=values, y=reference, name='ReLU')
-Tanh1_84 = go.Scatter(x=values, y=reference0, name='Tanh(1.84*x)')
-Tanh1_29 = go.Scatter(x=values, y=reference1, name='Tanh(1.29*x)')
-Tanh = go.Scatter(x=values, y=reference2, name='Tanh(x)')
-Tanh0_7 = go.Scatter(x=values, y=reference3, name='Tanh(0.7*x)')
+Tanh1_232 = go.Scatter(x=values, y=reference0, name='Tanh(1.84*x)')
+# Tanh1_29 = go.Scatter(x=values, y=reference1, name='Tanh(1.29*x)')
+# Tanh = go.Scatter(x=values, y=reference2, name='Tanh(x)')
+# Tanh0_7 = go.Scatter(x=values, y=reference3, name='Tanh(0.7*x)')
 
 # Integrate the graphs' data
-data = [SCReLU, ReLU, Tanh1_84, Tanh1_29, Tanh, Tanh0_7]
+# data = [SCReLU, ReLU, Tanh1_84, Tanh1_29, Tanh, Tanh0_7]
+data = [SCReLU, ReLU, Tanh1_232]
 
 # create plots
 py.offline.plot(data, filename='testplot_ReLU.html')

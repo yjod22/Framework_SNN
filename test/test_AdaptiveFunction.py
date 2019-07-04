@@ -17,6 +17,13 @@
 # History
 ################################################################################
 # File:		   test_AdaptiveFunction.py
+# Version:     13.0
+# Author/Date: Junseok Oh / 2019-06-30
+# Change:      (SCR_V12.0-1): Set scale factor of activation functions by users
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
+# File:		   test_AdaptiveFunction.py
 # Version:     12.0
 # Author/Date: Junseok Oh / 2019-06-25
 # Change:      (SCR_V11.0-8): Refer to the class in holayer.py
@@ -122,24 +129,25 @@ for i in range(values.shape[0]):
 
 
 # Refer to the class
-hoActivation = HOActivation(activationFunc="STanh")
+scale = 2
+hoActivation = HOActivation(activationFunc="STanh", scale=scale)
 
 # Calculate the graphs' data that are going to be assigned to the y-axis
 for i in range(values.shape[0]):
-    result1[i] = stochtoint(hoActivation.ActivationFuncSTanhLUTSN(SNs[i], 1))
-    result2[i] = stochtoint(hoActivation.ActivationFuncSTanhLUTSN(SNs[i], 2))
-    result3[i] = stochtoint(hoActivation.ActivationFuncSTanhLUTSN(SNs[i], 3))
-    result4[i] = stochtoint(hoActivation.ActivationFuncSTanhLUTSN(SNs[i], 4))
-    result5[i] = stochtoint(hoActivation.ActivationFuncSTanhLUTSN(SNs[i], 5))
-    result6[i] = stochtoint(hoActivation.ActivationFuncSTanhLUTSN(SNs[i], 6))
-    result7[i] = stochtoint(hoActivation.ActivationFuncSTanhLUTSN(SNs[i], 7))
-    reference1[i] = np.tanh(values[i]*1)
-    reference2[i] = np.tanh(values[i]*2)
-    reference3[i] = np.tanh(values[i]*3)
-    reference4[i] = np.tanh(values[i]*4)
-    reference5[i] = np.tanh(values[i]*5)
-    reference6[i] = np.tanh(values[i]*6)
-    reference7[i] = np.tanh(values[i]*7)
+    result1[i] = stochtoint(hoActivation.ActivationFuncSTanhLUTSN(SNs[i], 1, hoActivation.scale))
+    result2[i] = stochtoint(hoActivation.ActivationFuncSTanhLUTSN(SNs[i], 2, hoActivation.scale))
+    result3[i] = stochtoint(hoActivation.ActivationFuncSTanhLUTSN(SNs[i], 3, hoActivation.scale))
+    result4[i] = stochtoint(hoActivation.ActivationFuncSTanhLUTSN(SNs[i], 4, hoActivation.scale))
+    result5[i] = stochtoint(hoActivation.ActivationFuncSTanhLUTSN(SNs[i], 5, hoActivation.scale))
+    result6[i] = stochtoint(hoActivation.ActivationFuncSTanhLUTSN(SNs[i], 6, hoActivation.scale))
+    result7[i] = stochtoint(hoActivation.ActivationFuncSTanhLUTSN(SNs[i], 7, hoActivation.scale))
+    reference1[i] = np.tanh(values[i]*1*scale)
+    reference2[i] = np.tanh(values[i]*2*scale)
+    reference3[i] = np.tanh(values[i]*3*scale)
+    reference4[i] = np.tanh(values[i]*4*scale)
+    reference5[i] = np.tanh(values[i]*5*scale)
+    reference6[i] = np.tanh(values[i]*6*scale)
+    reference7[i] = np.tanh(values[i]*7*scale)
 
 
 # Assign the graphs' data to x-axis and y-axis

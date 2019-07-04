@@ -17,6 +17,13 @@
 # History
 ################################################################################
 # File:		   test_SC-based_Tanh.py
+# Version:     13.0
+# Author/Date: Junseok Oh / 2019-06-30
+# Change:      (SCR_V12.0-1): Set scale factor of activation functions by users
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
+# File:		   test_SC-based_Tanh.py
 # Version:     12.0
 # Author/Date: Junseok Oh / 2019-06-25
 # Change:      (SCR_V11.0-3): Define SumUpPC, SumUpAPC8,16,25 for verifying (A)PC+BTanh
@@ -276,7 +283,9 @@ numSamples = 1000
 # numBitstreams =25*4*10
 numBitstreams =25
 # numStates = numBitstreams*4
-numStates = 94
+# numStates = 16
+constantH = 0.7
+scale = 1
 result = np.zeros(numSamples)
 reference = np.zeros(numSamples)
 reference0 = np.zeros(numSamples)
@@ -302,11 +311,11 @@ for i in range(partialValues.shape[0]):
     partialSNs[i] = createSN(partialValues[i], SN_length)
 
 # Refer to the class
-hoActivation = HOActivation(activationFunc="default")
+hoActivation = HOActivation(activationFunc="default", scale=scale, constantH=constantH)
 
 # apply stochastic function
 for i in range(values.shape[0]):
-    count, _, numAPC25, numAPC16, numAPC8 = hoActivation.SumUpAPCLUT(partialSNs[(i*numBitstreams):((i+1)*numBitstreams), 0:SN_length])
+    count, sizePreprocessed, numAPC25, numAPC16, numAPC8 = hoActivation.SumUpAPCLUT(partialSNs[(i*numBitstreams):((i+1)*numBitstreams), 0:SN_length])
     # count = SumUpPC(partialSNs[(i*numBitstreams):((i+1)*numBitstreams), 0:SN_length])
     # count = SumUpAPC8(partialSNs[(i*numBitstreams):((i+1)*numBitstreams), 0:SN_length],
     #                  SN_length,
@@ -317,20 +326,20 @@ for i in range(values.shape[0]):
     # count = SumUpAPC25(partialSNs[(i*numBitstreams):((i+1)*numBitstreams), 0:SN_length],
     #                    SN_length,
     #                    numBitstreams)
-    outputAPC[i] = hoActivation.UpDownCounter(count, numBitstreams, numStates)
+    outputAPC[i] = hoActivation.UpDownCounter(count, numBitstreams+sizePreprocessed, hoActivation.constantH, hoActivation.scale)
 
 # Calculate the graphs' data that are going to be assigned to the y-axis
 for i in range(values.shape[0]):
     result[i] = stochtoint(outputAPC[i])
     # reference[i] = min(max(0, values[i]), 1) # Clipped-ReLU
-    reference0[i] = np.tanh(values[i]*1.9740*0.7)
-    reference1[i] = np.tanh(values[i]*1.9740)
+    reference0[i] = np.tanh(values[i]*1*0.7)
+    reference1[i] = np.tanh(values[i]*1)
 	
 # Assign the graphs' data to x-axis and y-axis
 BTanh = go.Scatter(x=values, y=result, mode='markers', name='BTanh')
 # ReLU = go.Scatter(x=values, y=reference, name='ReLU')
-Ref0 = go.Scatter(x=values, y=reference0, name='Tanh(1.3818*x)')  # For APC, 1.3818 = 0.7*1.9740
-Ref1 = go.Scatter(x=values, y=reference1, name='Tanh(1.9740*x)')  # For PC
+Ref0 = go.Scatter(x=values, y=reference0, name='Tanh(1.0*0.7*x)')  # For APC
+Ref1 = go.Scatter(x=values, y=reference1, name='Tanh(1.0*x)')  # For PC
 
 # Integrate the graphs' data
 data = [BTanh, Ref0, Ref1]
