@@ -17,6 +17,14 @@
 # History
 ################################################################################
 # File:		   test_SC-based_Tanh.py
+# Version:     15.0
+# Author/Date: Junseok Oh / 2019-07-05
+# Change:      (SCR_V14.0-1): Modularize the classes, change the file names
+#              (SCR_V14.0-6): Update test files so that it is referred to the current SW
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
+# File:		   test_SC-based_Tanh.py
 # Version:     13.0
 # Author/Date: Junseok Oh / 2019-06-30
 # Change:      (SCR_V12.0-1): Set scale factor of activation functions by users
@@ -72,7 +80,7 @@ import plotly as py
 import plotly.graph_objs as go
 import copy
 import pickle
-from snn.holayer import HOActivation
+from snn.hoLayer import HOActivation
 
 '''Function version v12.0'''
 def SumUpPC(x):
@@ -311,7 +319,8 @@ for i in range(partialValues.shape[0]):
     partialSNs[i] = createSN(partialValues[i], SN_length)
 
 # Refer to the class
-hoActivation = HOActivation(activationFunc="default", scale=scale, constantH=constantH)
+hoActivation = HOActivation(kBits=11, baseMode="APC",
+                            activationFunc="default", scale=scale, constantH=constantH)
 
 # apply stochastic function
 for i in range(values.shape[0]):

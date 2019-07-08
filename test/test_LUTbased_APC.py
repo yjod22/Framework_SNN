@@ -17,6 +17,14 @@
 # History
 ################################################################################
 # File:		   test_LUTbased_APC.py
+# Version:     15.0
+# Author/Date: Junseok Oh / 2019-07-05
+# Change:      (SCR_V14.0-1): Modularize the classes, change the file names
+#              (SCR_V14.0-6): Update test files so that it is referred to the current SW
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
+# File:		   test_LUTbased_APC.py
 # Version:     12.0
 # Author/Date: Junseok Oh / 2019-06-25
 # Change:      (SCR_V11.0-2): Define SumUpAPC25 for debugging purpose
@@ -86,7 +94,7 @@ import plotly as py
 import plotly.graph_objs as go
 import copy
 import pickle
-from snn.holayer import HOActivation
+from snn.hoLayer import HOActivation
 
 '''
 # Dimension altering practice
@@ -254,7 +262,7 @@ for i in range(partialValues.shape[0]):
     partialSNs[i] = createSN(partialValues[i], SN_length)
 
 # Refer to the class
-hoActivation = HOActivation(activationFunc="default")
+hoActivation = HOActivation(kBits=11, baseMode="APC", activationFunc="default")
 
 # Add numbers using APCs
 for i in range(values.shape[0]):

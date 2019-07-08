@@ -17,6 +17,13 @@
 # History
 ################################################################################
 # File:		   intensive_snn_tests.py
+# Version:     15.0
+# Author/Date: Junseok Oh / 2019-07-01
+# Change:      (SCR_V14.0-1): Modularize the classes, change the file names
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
+# File:		   intensive_snn_tests.py
 # Version:     14.0 
 # Author/Date: Junseok Oh / 2019-07-04
 # Change:      (SCR_V13.0-1): Place CreateSN on the higher class
@@ -56,7 +63,7 @@
 # Version:     6.1 (SCR_V6.0-5)
 # Author/Date: Junseok Oh / 2019-01-31
 # Change:      Save the intermediate results in the txt format
-#			   Refer to the following website
+#              Refer to the following website
 #			   https://stackoverflow.com/questions/3685265/how-to-write-a-multidimensional-array-to-a-text-file/3685295
 # Cause:       Need to extract the intermediate results
 # Initiator:   Florian Neugebauer
@@ -77,24 +84,16 @@
 ###############################################################################
 import keras
 from keras.datasets import mnist
-from keras.models import Sequential, Model
 from keras.layers import Dense, Dropout, Flatten, Activation
 from keras.layers import Conv2D, MaxPooling2D
 from keras import backend as K
-from keras import regularizers
-from keras.callbacks import Callback
 from intensive_snn_tests import WeightScaling_intensiveTests_61
-from keras.utils.generic_utils import get_custom_objects
 import numpy as np
-import random
-from snn.holayer import HOModel, HOMaxPoolingExact, HOMaxPoolingAprox, HOConvolution, HOConnected
-from snn.utils import HOUtils
-from snn.bnlayer import BNModel
+from snn.hoModel import HOModel
+from snn.hoLayer import HOMaxPoolingExact, HOMaxPoolingAprox, HOConvolution, HOConnected
+from snn.hoUtils import HOUtils
+from snn.bnLayer import BNModel
 import global_variables
-from plotly import tools
-import plotly as py
-import plotly.graph_objs as go
-import copy
 
 # misc functions
 def first_layer_activation(x):

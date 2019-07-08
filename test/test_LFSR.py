@@ -17,6 +17,13 @@
 # History
 ################################################################################
 # File:		   test_LFSR.py
+# Version:     15.0
+# Author/Date: Junseok Oh / 2019-07-05
+# Change:      (SCR_V14.0-1): Modularize the classes, change the file names
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
+# File:		   test_LFSR.py
 # Version:     14.0
 # Author/Date: Junseok Oh / 2019-07-01
 # Change:      (SCR_V13.0-3): Implement Random Number Generator
@@ -27,7 +34,7 @@
 import numpy as np
 import plotly as py
 import plotly.graph_objs as go
-from snn.snn import HOSnn
+from snn.hoSnn import HOSnn
 
 
 # Initialize the graphs' data and parameters

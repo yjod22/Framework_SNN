@@ -17,6 +17,14 @@
 # History
 ################################################################################
 # File:		   test_AdaptiveFunction.py
+# Version:     15.0
+# Author/Date: Junseok Oh / 2019-07-05
+# Change:      (SCR_V14.0-1): Modularize the classes, change the file names
+#              (SCR_V14.0-6): Update test files so that it is referred to the current SW
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
+# File:		   test_AdaptiveFunction.py
 # Version:     13.0
 # Author/Date: Junseok Oh / 2019-06-30
 # Change:      (SCR_V12.0-1): Set scale factor of activation functions by users
@@ -77,7 +85,7 @@ import numpy as np
 import plotly as py
 import plotly.graph_objs as go
 import copy
-from snn.holayer import HOActivation
+from snn.hoLayer import HOActivation
 
 def createSN(x, length):
     """create bipolar SN by comparing random vector elementwise to SN value x"""
@@ -130,7 +138,7 @@ for i in range(values.shape[0]):
 
 # Refer to the class
 scale = 2
-hoActivation = HOActivation(activationFunc="STanh", scale=scale)
+hoActivation = HOActivation(kBits=11, activationFunc="STanh", scale=scale)
 
 # Calculate the graphs' data that are going to be assigned to the y-axis
 for i in range(values.shape[0]):

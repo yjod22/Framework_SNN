@@ -6,7 +6,7 @@
 #                                                                             #
 ###############################################################################
 #
-#  Filename:     test_SC-basedReLU.py
+#  Filename:     test_SC-based_ReLU.py
 #
 ###############################################################################
 #  Description:
@@ -15,6 +15,14 @@
 #
 ###############################################################################
 # History
+################################################################################
+# File:		   test_SC-based_ReLU.py
+# Version:     15.0
+# Author/Date: Junseok Oh / 2019-07-05
+# Change:      (SCR_V14.0-1): Modularize the classes, change the file names
+#              (SCR_V14.0-6): Update test files so that it is referred to the current SW
+# Cause:       -
+# Initiator:   Florian Neugebauer
 ################################################################################
 # File:		   test_LUTbased_APC.py
 # Version:     13.0
@@ -78,7 +86,7 @@ import plotly as py
 import plotly.graph_objs as go
 import copy
 import pickle
-from snn.holayer import HOActivation
+from snn.hoLayer import HOActivation
 
 def createSN(x, length):
     """create bipolar SN by comparing random vector elementwise to SN value x"""
@@ -131,7 +139,7 @@ for i in range(partialValues.shape[0]):
     partialSNs[i] = createSN(partialValues[i], SN_length)
 
 # Refer to the class
-hoActivation = HOActivation(activationFunc="default")
+hoActivation = HOActivation(kBits=11, baseMode="APC", activationFunc="default")
 
 # apply stochastic function
 for i in range(values.shape[0]):
@@ -153,7 +161,7 @@ for i in range(values.shape[0]):
 # Assign the graphs' data to x-axis and y-axis
 SCReLU = go.Scatter(x=values, y=result, mode='markers', name='SCReLU')
 ReLU = go.Scatter(x=values, y=reference, name='ReLU')
-Tanh1_232 = go.Scatter(x=values, y=reference0, name='Tanh(1.84*x)')
+Tanh1_232 = go.Scatter(x=values, y=reference0, name='Tanh(1.232*x)')
 # Tanh1_29 = go.Scatter(x=values, y=reference1, name='Tanh(1.29*x)')
 # Tanh = go.Scatter(x=values, y=reference2, name='Tanh(x)')
 # Tanh0_7 = go.Scatter(x=values, y=reference3, name='Tanh(0.7*x)')

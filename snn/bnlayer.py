@@ -6,7 +6,7 @@
 #                                                                             #
 ###############################################################################
 #
-#  Filename:     bnlayer.py
+#  Filename:     bnLayer.py
 #
 ###############################################################################
 #  Description:
@@ -15,6 +15,14 @@
 #  
 ###############################################################################
 # History
+################################################################################
+# File:		   bnLayer.py
+# Version:     15.0
+# Author/Date: Junseok Oh / 2019-07-01
+# Change:      (SCR_V14.0-1): Modularize the classes, change the file names
+#              (SCR_V14.0-7): Allow user to set the number of possible iterations
+# Cause:       -
+# Initiator:   Florian Neugebauer
 ################################################################################
 # File:		   bnlayer.py
 # Version:     12.0 
@@ -50,19 +58,11 @@
 # Initiator:   Junseok Oh
 ###############################################################################
 import keras
-from keras.datasets import mnist
 from keras.models import Sequential, Model
-from keras.layers import Dense, Dropout, Flatten, Activation
-from keras.layers import Conv2D, MaxPooling2D
-from keras import backend as K
-from keras import regularizers
 import numpy as np
 import random
 import copy
-from plotly import tools
-import plotly as py
-import plotly.graph_objs as go
-from snn.utils import HOUtils
+from snn.hoUtils import HOUtils
 import global_variables
 import statistics
 
@@ -182,7 +182,7 @@ class BNModel(object):
         return self.cntPossibleIteration
 
     def OptimizeNetwork(self, testNumber, titleLargeEpochWeight, titleSmallEpochWeight, callBackFunction,
-                        tupleLayer=(1, ), x_train=0, y_train=0, x_test=0, y_test=0, epochs=1, batch_size=128):
+                        cntIter=1, tupleLayer=(1, ), x_train=0, y_train=0, x_test=0, y_test=0, epochs=1, batch_size=128):
         cntIteration = 0
         bIteration = True
         bRetraining = True
@@ -192,7 +192,7 @@ class BNModel(object):
         self.ClearWeights()
         for e in tupleLayer:
             self.GetWeights(e)
-        self.InitializeIndex(tupleLayer, testNumber)
+        self.InitializeIndex(tupleLayer, testNumber, cntIter)
 
         # Get the weights from Small Epoch
         self.Load_weights(titleSmallEpochWeight)
@@ -230,7 +230,7 @@ class BNModel(object):
                      callbacks=[callBackFunction.WeightScale()],
                      validation_data=(x_test, y_test))
             self.Load_weights('../results/#Epoch' + str(global_variables.cntEpochs) +
-                              ' weights of 2nd model_' + str(testNumber) + '.h5')
+                              '_weights_of_2nd_model_' + str(testNumber) + '.h5')
 
             # Evalute the model
             self.Evaluate(x_test[:500], y_test[:500], verbose=0, indexModel=2)
@@ -260,7 +260,7 @@ class BNModel(object):
                 self.LoadWeightsFrom1stModel()
 
 
-    def InitializeIndex(self, tupleLayer, testNumber):
+    def InitializeIndex(self, tupleLayer, testNumber, cntIter):
         # Initialize the dimensions of the weights
         #self.numWeightsLayer = int(len(self.weights)/ len(self.weights[0]))
         self.numWeightsLayer = len(self.weights)
@@ -323,8 +323,8 @@ class BNModel(object):
         # Count the number of NonOutliers
         #self.cntPossibleIteration = len(self.listIndexNonOutliers)
 
-        # At the moment, it will iterate up to three times
-        self.SetCntPossibleIteration(3)
+        # It will iterate up to the defined counts
+        self.SetCntPossibleIteration(cntIter)
 
     def ReplaceOutliers(self, testNumber):
         print("Remained iteration: " + str(self.cntPossibleIteration))
@@ -458,4 +458,3 @@ class BNModel(object):
         weightsSorted = weightsSorted.reshape((self.numOutputSlices[indexLayer],
                                                self.numRow[indexLayer] * self.numCol[indexLayer] * self.numInputSlices[indexLayer]), order='F')
         HOUtils().PlotWeights(values, weightsSorted, title, filename)
-
