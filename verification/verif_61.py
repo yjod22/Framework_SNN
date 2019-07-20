@@ -17,6 +17,13 @@
 # History
 ################################################################################
 # File:		   verif_61.py
+# Version:     16.0
+# Author/Date: Junseok Oh / 2019-07-16
+# Change:      (SCR_V15.0-1): Update the comments
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
+# File:		   verif_61.py
 # Version:     15.0
 # Author/Date: Junseok Oh / 2019-07-01
 # Change:      (SCR_V14.0-5): Verify the all functionality
@@ -115,7 +122,7 @@ global_variables.bnModel.Fit(x_train, y_train,
                              validation_data=(x_test, y_test))
 global_variables.bnModel.Load_weights('../results/#Epoch20_weights_of_1st_model_verif_61.h5')
 global_variables.bnModel.Evaluate(x_test[:500], y_test[:500], verbose=0, indexModel=1)
-global_variables.bnModel.Evaluate(x_test[:1000], y_test[:1000], verbose=0, indexModel=1)
+global_variables.bnModel.Evaluate(x_test[:800], y_test[:800], verbose=0, indexModel=1)
 
 # Optimize the neural network
 global_variables.bnModel.OptimizeNetwork('verif_61',
@@ -133,7 +140,7 @@ global_variables.bnModel.OptimizeNetwork('verif_61',
                                          )
 print("Optimization is done")
 global_variables.bnModel.Evaluate(x_test[:500], y_test[:500], verbose=0, indexModel=2)
-global_variables.bnModel.Evaluate(x_test[:1000], y_test[:1000], verbose=0, indexModel=2)
+global_variables.bnModel.Evaluate(x_test[:800], y_test[:800], verbose=0, indexModel=2)
 
 # Get the layer models from bnModel
 layer1model = global_variables.bnModel[0]
@@ -162,14 +169,14 @@ weight_2_SNs, bias_2_SNs, listIndex2 = ut.GetConvolutionLayerWeightsBiasesSN(mod
 dense_biases = ut.GetConnectedLayerBiases(model, 7)
 dense_weight_SNs = ut.GetConnectedLayerWeightsSN(model, 7)
 
-output = np.zeros((1, 10))
 correct_predictions = 0
 test_index = 0
 output_mse = 0
+iter_validation = 800
 
 print('start stochastic NN')
 # for each input in the test set
-for r in range(10):
+for r in range(iter_validation):
     x = x_test[test_index]
     print(test_index)
 
@@ -239,11 +246,11 @@ for r in range(10):
     del(hoDenseLayer)
     ################### For debugging purpose, save the intermidiate results in the local variable ###################
     dense_output = hoModel.GetOutputMatrix()
-    print("dense 1 output from Binary NN")
+    print("dense 1 output from Binary NN without softmax")
     BNN_prediction = layer7model.predict(np.asarray([x_test[test_index]]))
     print(BNN_prediction)
     del(BNN_prediction)
-    print("dense 1 output from Stochastic NN")
+    print("dense 1 output from Stochastic NN without softmax")
     print(dense_output)
     ###################################################################################################################
     print('dense 1 layer done')
@@ -253,7 +260,7 @@ for r in range(10):
     for i in range(10):
         out_error = out_error + (dense_output[0, i] - out[0, i])**2
 
-    print("out_error:", out_error)
+    print("Current output_mse:", out_error)
     output_mse = output_mse + out_error
 
     # softmax activation
@@ -261,7 +268,7 @@ for r in range(10):
     exp_sum_out = np.sum(dense_out_exp)
     hybrid_output = [i/exp_sum_out for i in dense_out_exp]
     print('dense done with the softmax activation function')
-    print("Keras Prediction of max argument of dense layer")
+    print("Labeled output of the dense layer")
     print(np.argmax(y_test[test_index]))
     print("SNN results of dense layer")
     print(np.argmax(hybrid_output))
@@ -278,7 +285,7 @@ for r in range(10):
     del(dense_output)
     del(hoModel)
 
-correct_predictions = correct_predictions/10
+correct_predictions = correct_predictions/iter_validation
 print("correct classifications:", correct_predictions)
-output_mse = output_mse/10
-print("output_mse:", output_mse)
+output_mse = output_mse/iter_validation
+print("Average of output_mse:", output_mse)
