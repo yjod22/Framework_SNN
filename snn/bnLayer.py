@@ -17,6 +17,13 @@
 # History
 ################################################################################
 # File:		   bnLayer.py
+# Version:     17.0
+# Author/Date: Junseok Oh / 2019-07-20
+# Change:      (SCR_V16.0-1): Change the number of test samples
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
+# File:		   bnLayer.py
 # Version:     15.0
 # Author/Date: Junseok Oh / 2019-07-01
 # Change:      (SCR_V14.0-1): Modularize the classes, change the file names
@@ -234,7 +241,7 @@ class BNModel(object):
 
             # Evalute the model
             self.Evaluate(x_test[:500], y_test[:500], verbose=0, indexModel=2)
-            self.Evaluate(x_test[:107], y_test[:107], verbose=0, indexModel=2)
+            self.Evaluate(x_test[:800], y_test[:800], verbose=0, indexModel=2)
 
             # Get weights from the model
             for e in tupleLayer:

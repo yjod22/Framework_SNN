@@ -16,6 +16,13 @@
 ###############################################################################
 # History
 ################################################################################
+# File:        verif_111.py
+# Version:     17.0
+# Author/Date: Junseok Oh / 2019-07-20
+# Change:      (SCR_V16.0-2): Change the number of feature maps and L1-parameter
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
 # File:		   verif_111.py
 # Version:     16.0
 # Author/Date: Junseok Oh / 2019-07-18
@@ -89,10 +96,10 @@ else:
 # 1st Model
 global_variables.bnModel = BNModel(6)
 global_variables.bnModel.SetId(1) # Set as the 1st model
-global_variables.bnModel[0] = Conv2D(4, kernel_size=(4, 4),
+global_variables.bnModel[0] = Conv2D(8, kernel_size=(4, 4),
                                      input_shape=input_shape,
                                      use_bias=False,
-                                     kernel_regularizer=regularizers.l1(0.0007))
+                                     kernel_regularizer=regularizers.l1(0.001))
 global_variables.bnModel[1] = Activation(first_layer_activation)
 global_variables.bnModel[2] = MaxPooling2D(pool_size=(2, 2))
 global_variables.bnModel[3] = Flatten()
@@ -178,7 +185,7 @@ for r in range(iter_validation):
     del(SN_input_matrix)
 
     # convolutional layer 1
-    hoModel.SetNumOutputPlanes(4) # The number of slices:4
+    hoModel.SetNumOutputPlanes(8) # The number of slices:8
     hoModel.SetWeights(weight_1_SNs)
     #hoModel.SetZeroBias(2)
     hoModel.SetListIndex(listIndex1)
@@ -189,8 +196,8 @@ for r in range(iter_validation):
     print('conv layer 1 done')
 
     if(test_index % 10 == 0):
-        ut.SaveInTxtFormat('../results/v16.0_verif_111_conv1', test_index,
-                           hoModel.GetOutputMatrix(), 4, 25, 25,
+        ut.SaveInTxtFormat('../results/v17.0_verif_111_conv1', test_index,
+                           hoModel.GetOutputMatrix(), 8, 25, 25,
                            layer2model, x_test)
         print(str(test_index + 1) + ' conv 1 layer results saved in txt format')
 
@@ -200,8 +207,8 @@ for r in range(iter_validation):
     del(hoMaxLayer)
     print('max pool 1 done')
     if(test_index % 10 == 0):
-        ut.SaveInTxtFormat('../results/v16.0_verif_111_maxpool', test_index,
-                           hoModel.GetOutputMatrix(), 4, 12, 12,
+        ut.SaveInTxtFormat('../results/v17.0_verif_111_maxpool', test_index,
+                           hoModel.GetOutputMatrix(), 8, 12, 12,
                            layer3model, x_test)
         print(str(test_index+1)+' maxpool layer results saved in txt format')
 
