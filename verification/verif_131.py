@@ -199,7 +199,7 @@ for r in range(iter_validation):
     print('conv layer 1 done')
 
     if(test_index % 10 == 0):
-        ut.SaveInTxtFormat('../results/v17.0_verif_131_conv1', test_index,
+        ut.SaveInTxtFormat('../results/v18.0_verif_131_conv1', test_index,
                            hoModel.GetOutputMatrix(), 8, 25, 25,
                            layer2model, x_test)
         print(str(test_index + 1) + ' conv 1 layer results saved in txt format')
@@ -210,7 +210,7 @@ for r in range(iter_validation):
     del (hoMaxLayer)
     print('max pool 1 done')
     if (test_index % 10 == 0):
-        ut.SaveInTxtFormat('../results/v17.0_verif_131_maxpool', test_index,
+        ut.SaveInTxtFormat('../results/v18.0_verif_131_maxpool', test_index,
                            hoModel.GetOutputMatrix(), 8, 12, 12,
                            layer3model, x_test)
         print(str(test_index+1)+' maxpool layer results saved in txt format')
@@ -228,7 +228,7 @@ for r in range(iter_validation):
     print("conv layer 2 done")
 
     if (test_index % 10 == 0):
-        ut.SaveInTxtFormat('../results/v17.0_verif_131_conv2', test_index,
+        ut.SaveInTxtFormat('../results/v18.0_verif_131_conv2', test_index,
                            hoModel.GetOutputMatrix(), 8, 8, 8,
                            layer5model, x_test)
         print(str(test_index + 1) + ' conv layer 2 results saved in txt format')
@@ -239,7 +239,7 @@ for r in range(iter_validation):
     del(hoMaxLayer)
     print('max pool 2 done')
     if(test_index % 10 == 0):
-        ut.SaveInTxtFormat('../results/v17.0_verif_131_maxpool2', test_index,
+        ut.SaveInTxtFormat('../results/v18.0_verif_131_maxpool2', test_index,
                            hoModel.GetOutputMatrix(), 8, 4, 4,
                            layer6model, x_test)
         print(str(test_index+1)+' maxpool 2 layer results saved in txt format')
