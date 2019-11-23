@@ -17,6 +17,13 @@
 # History
 ################################################################################
 # File:		   hoLayer.py
+# Version:     18.2
+# Author/Date: Junseok Oh / 2019-11-23
+# Change:      (SCR_V18.1-2): Update dense layer bias addition
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
+# File:		   hoLayer.py
 # Version:     15.0
 # Author/Date: Junseok Oh / 2019-07-01
 # Change:      (SCR_V14.0-1): Modularize the classes, change the file names
@@ -671,11 +678,17 @@ class HOConnected(HOConn):
     def DenseFunc(self, inputs, numClasses, denseWeights, denseBias):
         numInputPlanes, sizeRow, sizeCol, snLength = inputs.shape
 
+        # Determine whether the layer uses a bias vector
+        if(self.use_bias == 'True'):
+            sizeBias = 1
+        else:
+            sizeBias = 0
+
         # Flatten the inputs
         sizeTensor = numInputPlanes * sizeRow * sizeCol  # The total number of elements in the whole layer
         denseInputs = inputs.reshape((1, sizeTensor, self.snLength))
 
-        self.dense_output_SN = np.full((numClasses, sizeTensor, self.snLength), False)
+        self.dense_output_SN = np.full((numClasses, sizeTensor + sizeBias, self.snLength), False)
         self.dense_output = np.zeros((1, numClasses))
 
         # PRODUCT in the inner product operations
@@ -683,10 +696,15 @@ class HOConnected(HOConn):
             for j in range(numClasses):
                 self.dense_output_SN[j, i] = np.logical_not(np.logical_xor(denseInputs[0, i], denseWeights[i, j]))
 
+        # Put the biases in the last elements of dense_output_SN if the biases exist
+        if(self.use_bias == 'True'):
+            for j in range(numClasses):
+                self.dense_output_SN[j, sizeTensor] = denseBias[j]
+
         # ADD in the inner product operations
         if (self.stochToInt == "Normal"):
             for i in range(numClasses):
-                for j in range(sizeTensor):
+                for j in range(sizeTensor+sizeBias):
                     self.dense_output[0, i] = self.dense_output[0, i] + self.StochToInt(self.dense_output_SN[i, j])
 
         elif (self.stochToInt == "APC"):
@@ -694,9 +712,6 @@ class HOConnected(HOConn):
                 count, _, numAPC25, numAPC16, numAPC8  = self.SumUpAPCLUT(self.dense_output_SN[i])
                 self.dense_output[0, i] = self.Count2Integer(count, self.snLength, numAPC25, numAPC16, numAPC8)
                 del(count)
-
-        # Biasing
-        self.dense_output = self.dense_output + denseBias
 
         # Activation function
         if (self.activationFunc == "Relu"):
