@@ -16,6 +16,14 @@
 ###############################################################################
 # History
 ################################################################################
+# File:        verif_131, hoModel, holayer, hoUtils.py
+# Version:     18.3
+# Author/Date: Junseok Oh / 2019-11-26
+# Change:      (SCR_V18.2-1): Use stochastic numbers for the dense layer's biases
+#              (SCR_V18.2-2): Implement the Mux-based addition in dense layers
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
 # File:		   hoLayer.py
 # Version:     18.2
 # Author/Date: Junseok Oh / 2019-11-23
@@ -261,11 +269,11 @@ import pickle
 from snn.hoSnn import HOSnn
 
 class HOLayer(HOSnn):
-    def __call__(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, **kwargs):
-        output = self.Call(inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, **kwargs)
+    def __call__(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, listIndexDense, **kwargs):
+        output = self.Call(inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, listIndexDense, **kwargs)
         return output
 
-    def Call(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, **kwargs):
+    def Call(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, listIndexDense, **kwargs):
         #This is where the layer's logic lives.
         return inputs
 
@@ -642,7 +650,7 @@ class HOActivation(HOLayer):
 
 
 class HOMaxPooling(HOLayer):
-    def Call(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, **kwargs):
+    def Call(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, listIndexDense, **kwargs):
         output = self.PoolingFunc(inputs)
         return output
 
@@ -651,7 +659,7 @@ class HOMaxPooling(HOLayer):
 
 
 class HOConv(HOActivation):
-    def Call(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, **kwargs):
+    def Call(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, listIndexDense, **kwargs):
         output = self.ConvFunc(inputs, weights, bias, listIndex)
         return output
 
@@ -660,11 +668,11 @@ class HOConv(HOActivation):
 
 
 class HOConn(HOActivation):
-    def Call(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, **kwargs):
-        output = self.DenseFunc(inputs, numClasses, denseWeights, denseBias)
+    def Call(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, listIndexDense, **kwargs):
+        output = self.DenseFunc(inputs, numClasses, denseWeights, denseBias, listIndexDense)
         return output
 
-    def DenseFunc(self, inputs, numClasses, denseWeights, denseBias):
+    def DenseFunc(self, inputs, numClasses, denseWeights, denseBias, listIndexDense):
         raise NotImplementedError
 
 
@@ -673,9 +681,11 @@ class HOConnected(HOConn):
         super().__init__(**kwargs)
 
         self.SetLayerID("FullyConnected")
-        self.dense_output_SN = [0]
 
-    def DenseFunc(self, inputs, numClasses, denseWeights, denseBias):
+        # Create the Stochastic Number Zero
+        self.zeroSN = self.CreateSN(0)
+
+    def DenseFunc(self, inputs, numClasses, denseWeights, denseBias, listIndexDense):
         numInputPlanes, sizeRow, sizeCol, snLength = inputs.shape
 
         # Determine whether the layer uses a bias vector
@@ -685,31 +695,65 @@ class HOConnected(HOConn):
             sizeBias = 0
 
         # Flatten the inputs
-        sizeTensor = numInputPlanes * sizeRow * sizeCol  # The total number of elements in the whole layer
-        denseInputs = inputs.reshape((1, sizeTensor, self.snLength))
+        sizeTensor = sizeBias + (numInputPlanes * sizeRow * sizeCol)  # The total number of elements in the whole layer
+        denseInputs = inputs.reshape((1, sizeTensor - sizeBias, self.snLength))
 
-        self.dense_output_SN = np.full((numClasses, sizeTensor + sizeBias, self.snLength), False)
+        self.dense_Product_SN = np.full((numClasses, sizeTensor, self.snLength), False)
+        self.dense_output_SN = np.full((numClasses, snLength), False)
         self.dense_output = np.zeros((1, numClasses))
 
         # PRODUCT in the inner product operations
-        for i in range(sizeTensor):
+        for i in range(sizeTensor - sizeBias):
             for j in range(numClasses):
-                self.dense_output_SN[j, i] = np.logical_not(np.logical_xor(denseInputs[0, i], denseWeights[i, j]))
+                self.dense_Product_SN[j, i] = np.logical_not(np.logical_xor(denseInputs[0, i], denseWeights[i, j]))
 
         # Put the biases in the last elements of dense_output_SN if the biases exist
         if(self.use_bias == 'True'):
             for j in range(numClasses):
-                self.dense_output_SN[j, sizeTensor] = denseBias[j]
+                self.dense_Product_SN[j, sizeTensor - sizeBias] = denseBias[j]
 
         # ADD in the inner product operations
         if (self.stochToInt == "Normal"):
             for i in range(numClasses):
-                for j in range(sizeTensor+sizeBias):
-                    self.dense_output[0, i] = self.dense_output[0, i] + self.StochToInt(self.dense_output_SN[i, j])
+                for j in range(sizeTensor):
+                    self.dense_output[0, i] = self.dense_output[0, i] + self.StochToInt(self.dense_Product_SN[i, j])
+
+        # ADD in the inner product operations
+        elif (self.stochToInt == "Mux"):
+            # Make use of listIndex not to consider zero weights in addition operation
+            for j in range(numClasses):
+                sizeTensorCompact = len(listIndexDense[j])
+                self.dense_Product_SNCompact = np.full((sizeTensorCompact, self.snLength), False)
+                #self.dense_output_SNCompact = np.full((sizeTensorCompact, self.snLength), False)
+                for i in range(sizeTensorCompact):
+                    indexTemp = listIndexDense[j][i]
+                    self.dense_Product_SNCompact[i] = self.dense_Product_SN[j, indexTemp]
+
+                s = np.full((sizeTensorCompact, self.snLength), False)
+                #self.convOutput[0] = np.full((self.snLength), False)
+
+                # Do not skip convolution if an one of the weights is not zero
+                if(sizeTensorCompact != 0):
+
+                    # Generate random numbers that determine which input will be selected in the mux
+                    r = np.random.randint(0, sizeTensorCompact, self.snLength)
+
+                    for i in range(sizeTensorCompact):
+                        # Make a filter from the random number set
+                        s[i] = (r == i).astype(int)
+                        # Sift out the values in the listProductSN over the snLength
+                        self.dense_output_SN[j] |= self.dense_Product_SNCompact[i] & s[i]
+
+                # Skip Convolution if the weights are all zero
+                else:
+                    self.dense_output_SN[j] = self.zeroSN
+
+                # convert dense_output_SN into dense_output
+                self.dense_output[0, j] = self.StochToInt(self.dense_output_SN[j])
 
         elif (self.stochToInt == "APC"):
             for i in range(numClasses):
-                count, _, numAPC25, numAPC16, numAPC8  = self.SumUpAPCLUT(self.dense_output_SN[i])
+                count, _, numAPC25, numAPC16, numAPC8  = self.SumUpAPCLUT(self.dense_Product_SN[i])
                 self.dense_output[0, i] = self.Count2Integer(count, self.snLength, numAPC25, numAPC16, numAPC8)
                 del(count)
 
@@ -773,14 +817,14 @@ class HOConvolution(HOConv):
         if(self.use_bias == 'True'):
             self.listProductSN[sizeTensor-1] = bias
 
-        # Make use of listIndex not to consider zero weights in addition operation
-        sizeTensorCompact = len(listIndex)
-        self.listProductSNCompact = np.full((sizeTensorCompact, self.snLength), False)
-        for i in range(sizeTensorCompact):
-            self.listProductSNCompact[i] = self.listProductSN[listIndex[i]]
-
         # ADD in the inner product operations
         if (self.baseMode == "Mux"):
+            # Make use of listIndex not to consider zero weights in addition operation
+            sizeTensorCompact = len(listIndex)
+            self.listProductSNCompact = np.full((sizeTensorCompact, self.snLength), False)
+            for i in range(sizeTensorCompact):
+                self.listProductSNCompact[i] = self.listProductSN[listIndex[i]]
+
             s = np.full((sizeTensorCompact, self.snLength),False)
             self.convOutput[0] = np.full((self.snLength), False)
 

@@ -16,6 +16,13 @@
 ###############################################################################
 # History
 ################################################################################
+# File:        verif_131, hoModel, holayer, hoUtils.py
+# Version:     18.3
+# Author/Date: Junseok Oh / 2019-11-26
+# Change:      (SCR_V18.2-1): Use stochastic numbers for the dense layer's biases
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
 # File:		   hoModel.py
 # Version:     15.0
 # Author/Date: Junseok Oh / 2019-07-01
@@ -68,6 +75,7 @@ class HOModel(HOSnn):
         self.denseWeightsSN = [0]
         self.denseBiasSN = [0]
         self.listIndex = [ [] for t in range(1)]
+        self.listIndexDense = [ [] for t in range(1)]
 
         # Set the flag of Fully-connected as zero (i.e. layers are not yet fully connected)
         self.flagFullyConnected = 0
@@ -116,10 +124,14 @@ class HOModel(HOSnn):
         self.denseBiasSN = x
 
     def SetZeroDenseBias(self, numClasses):
-        self.denseBiasSN = np.zeros((1, numClasses))
+        #self.denseBiasSN = np.zeros((1, numClasses))
+        self.denseBiasSN = np.full((numClasses, self.snLength), False)
 
     def SetListIndex(self, x):
         self.listIndex = x
+
+    def SetListIndexDense(self, x):
+        self.listIndexDense = x
 
     def CopyMatrix(self):
         self.copiedMatrix[:] = self.outputMatrix[:]
@@ -214,7 +226,7 @@ class HOModel(HOSnn):
                             # It calls the implementation of Convolution, MaxPooling, or Dense
                             self.localResult = holayer(self.Snip(i, row, col),
                                                        self.weightsSN[i], self.biasSN[i], self.listIndex[i],
-                                                       self.numOutputClasses, self.denseWeightsSN, self.denseBiasSN)
+                                                       self.numOutputClasses, self.denseWeightsSN, self.denseBiasSN, self.listIndexDense)
 
                             # In the case of Fully connected layer, Iterate over the Classes
                             for j in range(self.numOutputClasses):

@@ -16,13 +16,6 @@
 ###############################################################################
 # History
 ################################################################################
-# File:        verif_131, hoModel, holayer, hoUtils.py
-# Version:     18.3
-# Author/Date: Junseok Oh / 2019-11-26
-# Change:      (SCR_V18.2-1): Use stochastic numbers for the dense layer's biases
-# Cause:       -
-# Initiator:   Florian Neugebauer
-################################################################################
 # File:		   hoUtils.py
 # Version:     15.0
 # Author/Date: Junseok Oh / 2019-07-01

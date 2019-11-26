@@ -16,6 +16,13 @@
 ###############################################################################
 # History
 ################################################################################
+# File:        verif_131, hoModel, holayer, hoUtils.py
+# Version:     18.3
+# Author/Date: Junseok Oh / 2019-11-26
+# Change:      (SCR_V18.2-1): Use stochastic numbers for the dense layer's biases
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
 # File:        verif_131.py
 # Version:     18.0
 # Author/Date: Junseok Oh / 2019-07-21
@@ -160,8 +167,9 @@ global_variables.bnModel = 0
 weight_1_SNs, bias_1_SNs, listIndex1 = ut.GetConvolutionLayerWeightsBiasesSN(model, 1, Adaptive="True")
 weight_2_SNs, bias_2_SNs, listIndex2 = ut.GetConvolutionLayerWeightsBiasesSN(model, 4, Adaptive="True")
 
-dense_biases = ut.GetConnectedLayerBiases(model, 8)
-dense_weight_SNs = ut.GetConnectedLayerWeightsSN(model, 8)
+#dense_biases = ut.GetConnectedLayerBiases(model, 8)
+#dense_weight_SNs = ut.GetConnectedLayerWeightsSN(model, 8)
+dense_weight_SNs, dense_biases_SNs, listIndexDense = ut.GetConnectedLayerWeightsBiasesSN(model, 8, Adaptive="True")
 
 correct_predictions = 0
 test_index = 0
@@ -247,7 +255,8 @@ for r in range(iter_validation):
     # First dense layer
     hoModel.SetNumOutputPlanes(1) # The number of slices:1
     hoModel.SetDenseWeights(dense_weight_SNs)
-    hoModel.SetDenseBias(dense_biases)
+    hoModel.SetDenseBias(dense_biases_SNs)
+    hoModel.SetListIndexDense(listIndexDense)
     hoDenseLayer = HOConnected(kBits=kBits, stochToInt="APC", activationFunc="None", use_bias="True")
     hoModel.Activation(hoDenseLayer, num_classes=num_classes)
     del(hoDenseLayer)
