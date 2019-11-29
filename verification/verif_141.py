@@ -16,6 +16,13 @@
 ###############################################################################
 # History
 ################################################################################
+# File:        verif_111, 121, 141.py
+# Version:     19.0
+# Author/Date: Junseok Oh / 2019-11-29
+# Change:      (SCR_V18.2-1): Use stochastic numbers for the dense layer's biases
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
 # File:		   verif_141.py
 # Version:     18.1
 # Author/Date: Junseok Oh / 2019-08-30
@@ -141,8 +148,9 @@ global_variables.bnModel = 0
 weight_1_SNs, bias_1_SNs, listIndex1 = ut.GetConvolutionLayerWeightsBiasesSN(model, 1, Adaptive="True")
 weight_2_SNs, bias_2_SNs, listIndex2 = ut.GetConvolutionLayerWeightsBiasesSN(model, 4, Adaptive="True")
 
-dense_biases = ut.GetConnectedLayerBiases(model, 8)
-dense_weight_SNs = ut.GetConnectedLayerWeightsSN(model, 8)
+#dense_biases = ut.GetConnectedLayerBiases(model, 8)
+#dense_weight_SNs = ut.GetConnectedLayerWeightsSN(model, 8)
+dense_weight_SNs, dense_biases_SNs, listIndexDense = ut.GetConnectedLayerWeightsBiasesSN(model, 8, Adaptive="True")
 
 correct_predictions = 0
 test_index = 0
@@ -179,7 +187,7 @@ for r in range(iter_validation):
     print('conv layer 1 done')
 
     if(test_index % 100 == 0):
-        ut.SaveInTxtFormat('../results/v18.1_verif_141_conv1', test_index,
+        ut.SaveInTxtFormat('../results/v19.0_verif_141_conv1', test_index,
                            hoModel.GetOutputMatrix(), 4, 24, 24,
                            layer2model, x_test)
         print(str(test_index + 1) + ' conv 1 layer results saved in txt format')
@@ -190,7 +198,7 @@ for r in range(iter_validation):
     del (hoMaxLayer)
     print('max pool 1 done')
     if (test_index % 100 == 0):
-        ut.SaveInTxtFormat('../results/v18.1_verif_141_maxpool1', test_index,
+        ut.SaveInTxtFormat('../results/v19.0_verif_141_maxpool1', test_index,
                            hoModel.GetOutputMatrix(), 4, 12, 12,
                            layer3model, x_test)
         print(str(test_index + 1) + ' maxpool 1 layer results saved in txt format')
@@ -207,7 +215,7 @@ for r in range(iter_validation):
     print("conv layer 2 done")
 
     if (test_index % 100 == 0):
-        ut.SaveInTxtFormat('../results/v18.1_verif_141_conv2', test_index,
+        ut.SaveInTxtFormat('../results/v19.0_verif_141_conv2', test_index,
                            hoModel.GetOutputMatrix(), 12, 8, 8,
                            layer5model, x_test)
         print(str(test_index + 1) + ' conv layer 2 results saved in txt format')
@@ -218,7 +226,7 @@ for r in range(iter_validation):
     del(hoMaxLayer)
     print('max pool 2 done')
     if(test_index % 100 == 0):
-        ut.SaveInTxtFormat('../results/v18.0_verif_141_maxpool2', test_index,
+        ut.SaveInTxtFormat('../results/v19.0_verif_141_maxpool2', test_index,
                            hoModel.GetOutputMatrix(), 12, 4, 4,
                            layer6model, x_test)
         print(str(test_index+1)+' maxpool 2 layer results saved in txt format')
@@ -226,7 +234,8 @@ for r in range(iter_validation):
     # First dense layer
     hoModel.SetNumOutputPlanes(1) # The number of slices:1
     hoModel.SetDenseWeights(dense_weight_SNs)
-    hoModel.SetDenseBias(dense_biases)
+    hoModel.SetDenseBias(dense_biases_SNs)
+    hoModel.SetListIndexDense(listIndexDense)
     hoDenseLayer = HOConnected(kBits=kBits, stochToInt="APC", activationFunc="None", use_bias="True")
     hoModel.Activation(hoDenseLayer, num_classes=num_classes)
     del(hoDenseLayer)

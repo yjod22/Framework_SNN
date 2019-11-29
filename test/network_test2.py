@@ -88,8 +88,10 @@ ut=hoU.HOUtils(kBits=kBits)
 model = global_variables.bnModel.GetModel()
 weight_1_SNs, bias_1_SNs, listIndex1 = ut.GetConvolutionLayerWeightsBiasesSN(model, 1, Adaptive="True")
 
-dense_1_weight_SNs= ut.GetConnectedLayerWeightsSN(model, 5)
-dense_1_biases= ut.GetConnectedLayerBiases(model, 5)
+#dense_1_weight_SNs= ut.GetConnectedLayerWeightsSN(model, 5)
+#dense_1_biases= ut.GetConnectedLayerBiases(model, 5)
+dense_1_weight_SNs, dense_1_biases_SNs, listIndexDense = ut.GetConnectedLayerWeightsBiasesSN(model, 5, Adaptive="True")
+
 dense_2_weights= ut.GetConnectedLayerWeights(model, 7)
 dense_2_biases= ut.GetConnectedLayerBiases(model, 7)
 
@@ -114,7 +116,8 @@ for i in range(10000):
     hoModel.Activation(hoMaxLayer, stride=2)
     hoModel.SetNumOutputPlanes(1)
     hoModel.SetDenseWeights(dense_1_weight_SNs)
-    hoModel.SetDenseBias(dense_1_biases)
+    hoModel.SetDenseBias(dense_1_biases_SNs)
+    hoModel.SetListIndexDense(listIndexDense)
     hoDenseLayer = hoL.HOConnected(kBits=kBits, use_bias="True", stochToInt="APC", activationFunc="Relu")
     hoModel.Activation(hoDenseLayer, num_classes=100)
     output = hoModel.GetOutputMatrix()

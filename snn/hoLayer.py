@@ -16,6 +16,13 @@
 ###############################################################################
 # History
 ################################################################################
+# File:        verif_151, holayer.py
+# Version:     19.0
+# Author/Date: Junseok Oh / 2019-11-29
+# Change:      (SCR_V18.3-1): Implement Relu by the accurate SC-Max circuit
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
 # File:        verif_131, hoModel, holayer, hoUtils.py
 # Version:     18.3
 # Author/Date: Junseok Oh / 2019-11-26
@@ -789,6 +796,12 @@ class HOConvolution(HOConv):
         # Create the Stochastic Number Zero
         self.zeroSN = self.CreateSN(0)
 
+        # Create an instance of HOMaxPoolingExact when ReluByMax is selected as the activation function
+        if(self.activationFunc == "ReluByMax"):
+            self.reluByMax = HOMaxPoolingExact(1, 2, kBits=self.kBits)
+            self.inputsMax = np.full((1, 2, self.snLength), False)
+            self.inputsMax[0, 0] = self.zeroSN
+
     def GetFilterSize(self):
         return self.row
 
@@ -851,6 +864,11 @@ class HOConvolution(HOConv):
         if(self.activationFunc == "Relu"):
             self.convOutput[0] = self.ActivationFuncReluLUTSN(self.convOutput[0])
             #self.convOutput[0] = self.ActivationFuncReluSN(self.convOutput[0])
+
+        elif(self.activationFunc == "ReluByMax"):
+            self.inputsMax[0, 1] = self.convOutput[0]
+            resultMax = self.reluByMax.PoolingFunc(self.inputsMax)
+            self.convOutput[0] = resultMax[0]
 
         elif(self.activationFunc == "SCRelu"):
             self.convOutput[0] = self.UpDownCounterReLU(count, (sizeTensor+sizePreprocessed))
