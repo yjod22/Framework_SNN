@@ -16,6 +16,13 @@
 ###############################################################################
 # History
 ################################################################################
+# File:        generate_snLookupTableNumTanh.py
+# Version:     19.1
+# Author/Date: Junseok Oh / 2019-12-05
+# Change:      (SCR_V19.0-1): Change max. scale factor to 200
+# Cause:       -
+# Initiator:   Florian Neugebauer
+################################################################################
 # File:		   generate_snLookupTableNumTanh.py
 # Version:     15.0
 # Author/Date: Junseok Oh / 2019-07-04
@@ -60,10 +67,10 @@ def GenerateLookupTableForSTanh(byte, start_state, PAR_numState):
     return (np.packbits(x)[0], state)
 
 # Generate the lookup table for STanh activation function
-# the number of scale factors is 20. i.e. tanh(1*x), tanh(2*x), ... , tanh(20*x)
+# the number of scale factors is 20. i.e. tanh(1*x), tanh(2*x), ... , tanh(200*x)
 # the number of states of STanh's state machine is determined by (num+1)*2
 # 8bit [11111111] is equal to 255 in decimal
-numScaleFactor = 20
+numScaleFactor = 200
 snLookupTableOut = [[]for num in range(numScaleFactor)]
 snLookupTableState = [[]for num in range(numScaleFactor)]
 for num in range(numScaleFactor):
