@@ -45,6 +45,8 @@
 # Cause:       -
 # Initiator:   Florian Neugebauer
 ################################################################################
+import os
+os.environ["MKL_THREADING_LAYER"] = "GNU"
 import keras
 from keras.datasets import mnist
 from keras.layers import Dense, Dropout, Flatten, Activation
