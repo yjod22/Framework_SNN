@@ -16,6 +16,13 @@
 ###############################################################################
 # History
 ################################################################################
+# File:        holayer.py
+# Version:     19.2
+# Author/Date: Junseok Oh / 2020-01-27
+# Change:      (SCR_V19.1-2): Make small scale factor available in Stanh
+# Cause:       Bug found
+# Initiator:   Florian Neugebauer
+################################################################################
 # File:        verif_151, holayer.py
 # Version:     19.0
 # Author/Date: Junseok Oh / 2019-11-29
@@ -398,8 +405,8 @@ class HOActivation(HOLayer):
         numState = PAR_numState * PAR_scale * 2
         state = max(int(numState/2) - 1, 0)
 
-        _snLookupTableOut = self.snLookupTableOut[PAR_numState*PAR_scale-1]
-        _snLookupTableState = self.snLookupTableState[PAR_numState*PAR_scale-1]
+        _snLookupTableOut = self.snLookupTableOut[state]
+        _snLookupTableState = self.snLookupTableState[state]
 
         for i, byte in enumerate(sn):
             # Find the element with the current state and byte information in the table
