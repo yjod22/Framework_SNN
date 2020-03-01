@@ -63,10 +63,15 @@ https://github.com/yjod22/Framework_SNN/blob/releasedSW/test/
 
 ## The required keras.json file setting
 {
+
     "image_data_format": "channels_first",
+    
     "epsilon": 1e-07,    
+    
     "floatx": "float32",
+    
     "backend": "theano"
+    
 }
 
 ##  The required python packages for the framework
