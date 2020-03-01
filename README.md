@@ -61,6 +61,14 @@ https://github.com/yjod22/Framework_SNN/blob/releasedSW/test/network_test.py
 https://github.com/yjod22/Framework_SNN/blob/releasedSW/test/
 ![image2](https://github.com/yjod22/Framework_SNN/blob/releasedSW/testCaseConfiguration.png)
 
+## The required keras.json file setting
+{
+    "image_data_format": "channels_first",
+    "epsilon": 1e-07,    
+    "floatx": "float32",
+    "backend": "theano"
+}
+
 ##  The required python packages for the framework
 absl-py	0.2.2
 
