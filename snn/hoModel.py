@@ -1,38 +1,25 @@
-#
 ###############################################################################
 #                                                                             #
-#							 Copyright (c)									  #
+#                            Copyright (c)                                    #
 #                         All rights reserved.                                #
 #                                                                             #
 ###############################################################################
 #
-#  Filename:     hoModel.py
-#
-###############################################################################
-#  Description:
-#  
-#  (For a detailed description look at the object description in the UML model)
-#  
-###############################################################################
-# History
-################################################################################
-# File:        verif_131, hoModel, holayer, hoUtils.py
-# Version:     18.3
-# Author/Date: Junseok Oh / 2019-11-26
-# Change:      (SCR_V18.2-1): Use stochastic numbers for the dense layer's biases
-# Cause:       -
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   hoModel.py
-# Version:     15.0
-# Author/Date: Junseok Oh / 2019-07-01
-# Change:      (SCR_V14.0-1): Modularize the classes, change the file names
-# Cause:       -
-# Initiator:   Florian Neugebauer
+#  Filename:	hoModel.py
+#  Description:	
+#  Author/Date:	Junseok Oh / 2020-02-27
+#  Initiator:	Florian Neugebauer
 ################################################################################
 
 import numpy as np
 from snn.hoSnn import HOSnn
+
+"""
+Architecture of the classes
+  HOSnn
+    |		
+ HOModel   
+"""
 
 class HOModel(HOSnn):
     def __init__(self, inputMatrix, **kwargs):
@@ -145,7 +132,22 @@ class HOModel(HOSnn):
     def GetOutputMatrix(self):
         return self.outputMatrix
 
-    def Activation(self, holayer, **kwargs):
+    def Run(self, holayer, **kwargs):
+        """
+        Running a layer which is defined by the class HOConvolution, HOMaxPoolingAprox, HOMaxPoolingExact, or HOConnected
+
+        Parameters
+        ----------
+        holayer: object
+            the instance of the class HOLayer
+
+        stride: int
+            the amount of the stride over which a kernel slides
+
+        num_classes: int
+            the number of output classes when a dense layer is defined
+        """
+
         # Initialize index of output Row and Column
         outputRow = 0
         outputCol = 0
@@ -159,7 +161,7 @@ class HOModel(HOSnn):
 
         self.layerID = holayer.GetLayerID()
 
-        # If it is the first activation of the model, then skip the followings
+        # If it is the first run of the model, then skip the followings
         # Otherwise, it will change the current output Matrix as the input Matrix
         self.IncrementCntLayer()
         if(self.GetCntLayer() > 1):
@@ -234,6 +236,25 @@ class HOModel(HOSnn):
                                 self.FillOutput(j, i, outputRow, outputCol)
 
     def Snip(self, ithPlane, row, col):
+        """
+        Snniping an area of inputs with which a kernel would perform its convolution or max-pooling operation
+
+        Parameters
+        ----------
+        ithPlane: int
+            the index of a max-pooling's output layer
+
+        row: int
+            the vertical offset of operation target area
+
+        col: int
+            the horizontal offset of operation target area
+
+        Returns
+        -------
+        snippedMatrix: object
+            snipped area which is supposed to be calculated by the convolution kernel or max-pooling operation
+        """
         # In the case of MaxPooling layer
         if (self.layerID == "MaxPooling"):
             self.snippedMatrix = self.copiedMatrix[ithPlane, row:row+self.filterSize, col:col+self.filterSize]
@@ -248,6 +269,23 @@ class HOModel(HOSnn):
         return self.snippedMatrix
 
     def FillOutput(self, jthClass, ithPlane, row, col):
+        """
+        Placing the results of operations(convolution or max-pooling) onto the output layer
+
+        Parameters
+        ----------
+        jthClass: int
+            the index of a dense's output layer
+
+        ithPlane: int
+            the index of a convolution's or max-pooling's output layer
+
+        row: int
+            the vertical index of a convolution's or max-pooling's kernel result
+
+        col: int
+            the horizontal index of a convolution's or max-pooling's kernel result
+        """
         # In the case of Fully connected layer
         if (self.layerID == "FullyConnected"):
             self.outputMatrix[0, jthClass] = self.localResult[0][jthClass]

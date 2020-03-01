@@ -1,44 +1,31 @@
-#
 ###############################################################################
 #                                                                             #
-#							 Copyright (c)									  #
+#                            Copyright (c)                                    #
 #                         All rights reserved.                                #
 #                                                                             #
 ###############################################################################
 #
-#  Filename:     hoSnn.py
-#
-###############################################################################
-#  Description:
-#
-#  (For a detailed description look at the object description in the UML model)
-#
-###############################################################################
-# History
+#  Filename:	hoSnn.py
+#  Description:	
+#  Author/Date:	Junseok Oh / 2020-02-27
+#  Initiator:	Florian Neugebauer
 ################################################################################
-# File:		   hoSnn.py
-# Version:     15.0
-# Author/Date: Junseok Oh / 2019-07-01
-# Change:      (SCR_V14.0-1): Modularize the classes, change the file names
-# Cause:       -
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   snn.py
-# Version:     14.0
-# Author/Date: Junseok Oh / 2019-07-01
-# Change:      (SCR_V13.0-1): Place CreateSN on the higher class
-#              (SCR_V13.0-2): Place StochToInt on the higher class
-#              (SCR_V13.0-3): Implement Random Number Generator
-# Cause:       -
-# Initiator:   Florian Neugebauer
-################################################################################
-
+	
 import numpy as np
 import pickle
 import copy
 
+
 class HOSnn(object):
     def __init__(self, **kwargs):
+        """
+        Parameters
+        ----------
+        kBits: int
+            the length of Stochastic Number (SN)
+            e.g. kBits=10, the length of SN is 2^10
+            e.g. kBits=11, the length of SN is 2^11
+        """
         # Set kBits
         self.kBits = 10
         for key in kwargs:
@@ -57,10 +44,16 @@ class HOSnn(object):
         del(listLFSRTable)
 
     def StochToInt(self, x):
-        """convert bipolar stochastic number to integer"""
+        """
+        Converting bipolar stochastic number to integer
+        """
         return (sum(x) / len(x)) * 2.0 - 1.0
 
     def CreateSN(self, x):
+        """
+        (LFSR-based)
+        Creating bipolar SN by comparing random vector elementwise to SN value x
+        """
         # Initialize the SN
         x_SN = np.full(self.snLength, False)
 
@@ -85,7 +78,10 @@ class HOSnn(object):
         return x_SN
 
     def _CreateSN(self, x):
-        """create bipolar SN by comparing random vector elementwise to SN value x"""
+        """
+        (ARCHIVED), It is replaced by the LFSR-based CreateSN
+        Creating bipolar SN by comparing random vector elementwise to SN value x
+        """
         # rand = np.random.rand(length)*2.0 - 1.0
         #  x_SN = np.less(rand, x)
         large = np.random.rand(1)

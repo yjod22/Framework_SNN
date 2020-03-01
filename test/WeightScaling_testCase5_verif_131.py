@@ -1,34 +1,13 @@
-#
 ###############################################################################
 #                                                                             #
-#							 Copyright (c)									  #
+#                            Copyright (c)                                    #
 #                         All rights reserved.                                #
 #                                                                             #
 ###############################################################################
 #
-#  Filename:     WeightScaling_testCase5_verif_131.py
-#
-###############################################################################
-#  Description:
-#
-#  (For a detailed description look at the object description in the UML model)
-#
-###############################################################################
-# History
-################################################################################
-# File:        testCaseX_verif_131, WeightScaling_testCaseX_verif_131.py
-# Version:     19.2
-# Author/Date: Junseok Oh / 2020-02-04
-# Change:      (SCR_V19.1-3): Extend the simulation of verif_131
-# Cause:       -
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:	       WeightScaling_verif_131.py
-# Version:     18.0
-# Author/Date: Junseok Oh / 2019-07-21
-# Change:      (SCR_V17.0-1): Update more test cases
-# Cause:       -
-# Initiator:   Florian Neugebauer
+#  Filename:	WeightScaling_testCase5_verif_131.py
+#  Author/Date:	Junseok Oh / 2020-02-27
+#  Initiator:	Florian Neugebauer
 ################################################################################
 import global_variables
 from keras.callbacks import Callback

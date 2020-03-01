@@ -1,41 +1,13 @@
-#
 ###############################################################################
 #                                                                             #
-#							 Copyright (c)									  #
+#                            Copyright (c)                                    #
 #                         All rights reserved.                                #
 #                                                                             #
 ###############################################################################
 #
-#  Filename:     testCase6_verif_131.py
-#
-###############################################################################
-#  Description:
-#  
-#  (For a detailed description look at the object description in the UML model)
-#  
-###############################################################################
-# History
-################################################################################
-# File:        testCaseX_MNIST, WeightScaling_testCaseX_MNIST.py
-# Version:     19.2
-# Author/Date: Junseok Oh / 2020-02-04
-# Change:      (SCR_V19.1-3): Extend the simulation of verif_131
-# Cause:       -
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:        verif_131, hoModel, holayer, hoUtils.py
-# Version:     18.3
-# Author/Date: Junseok Oh / 2019-11-26
-# Change:      (SCR_V18.2-1): Use stochastic numbers for the dense layer's biases
-# Cause:       -
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:        verif_131.py
-# Version:     18.0
-# Author/Date: Junseok Oh / 2019-07-21
-# Change:      (SCR_V17.0-1): Update more test cases
-# Cause:       -
-# Initiator:   Florian Neugebauer
+#  Filename:	testCase6_verif_131.py
+#  Author/Date:	Junseok Oh / 2020-02-27
+#  Initiator:	Florian Neugebauer
 ################################################################################
 import os
 os.environ["MKL_THREADING_LAYER"] = "GNU"
@@ -45,7 +17,6 @@ from keras.layers import Dense, Dropout, Flatten, Activation
 from keras.layers import Conv2D, MaxPooling2D
 from keras import backend as K
 from keras import regularizers
-from verification import WeightScaling_verif_131
 import numpy as np
 from sklearn.utils import shuffle
 from snn.hoModel import HOModel
@@ -54,12 +25,6 @@ from snn.hoUtils import HOUtils
 from snn.bnLayer import BNModel
 import global_variables
 
-# misc functions
-def first_layer_activation(x):
-    return K.tanh(x)
-
-#get_custom_objects().update({'first_layer_activation': Activation(first_layer_activation)})
-
 np.set_printoptions(threshold=np.inf)
 
 batch_size = 128
@@ -67,9 +32,26 @@ num_classes = 10
 epochs = 20
 cntEpochs = 0
 
+""" 
+[Step 1]: Generate global variables
+"""
 # Define the global variables
 global_variables.DefineGlobalVariables()
 
+"""
+[Step 2]: Define callback functions
+"""
+import WeightScaling_verif_131
+
+""" 
+[Step 3]: Define activation functions of a BNN
+"""
+def first_layer_activation(x):
+    return K.tanh(x)
+
+""" 
+[Step 4]: Change the range and format of the input dataset
+"""
 # input image dimensions
 img_rows, img_cols = 28, 28
 
@@ -103,6 +85,9 @@ else:
     x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 1)
     input_shape = (img_rows, img_cols, 1)
 
+""" 
+[Step 5]: Build the BNN
+"""
 # 1st Model
 global_variables.bnModel = BNModel(9)
 global_variables.bnModel.SetId(1) # Set as the 1st model
@@ -134,6 +119,9 @@ global_variables.bnModel.Compile(loss=keras.losses.mse,
 global_variables.bnModel.Load_weights('../results/#Epoch20_weights_of_1st_model_verif_131.h5')
 global_variables.bnModel.Evaluate(x_test[:800], y_test[:800], verbose=0, indexModel=1)
 
+""" 
+[Step 6]: Optimize the BNN
+"""
 # Optimize the neural network
 #global_variables.bnModel.OptimizeNetwork('verif_131',
 #                                         '../results/#Epoch20_weights_of_1st_model_verif_131.h5',
@@ -163,27 +151,24 @@ layer7model = global_variables.bnModel[6]
 layer8model = global_variables.bnModel[7]
 layer9model = global_variables.bnModel[8]
 
-# Hybrid NN with stochastic convolutional layer and binary dense layer
-
-# SN length
+""" 
+[Step 7]: Extract trained parameters
+"""
 kBits = 11
 length = 2 ** kBits
-
 ut = HOUtils(kBits=kBits)
 model = global_variables.bnModel.GetModel()
 global_variables.bnModel = 0
-
-# weights and biases of the convolutional layer
 weight_1_SNs, bias_1_SNs, listIndex1 = ut.GetConvolutionLayerWeightsBiasesSN(model, 1, Adaptive="True")
 weight_2_SNs, bias_2_SNs, listIndex2 = ut.GetConvolutionLayerWeightsBiasesSN(model, 4, Adaptive="True")
-
-#dense_biases = ut.GetConnectedLayerBiases(model, 8)
-#dense_weight_SNs = ut.GetConnectedLayerWeightsSN(model, 8)
 dense_weight_SNs, dense_biases_SNs, listIndexDense = ut.GetConnectedLayerWeightsBiasesSN(model, 8, Adaptive="True")
 
 # shuffle the test data samples
 x_test, y_test = shuffle(x_test, y_test)
 
+"""
+[Step 8]: Iterate over the test samples
+"""
 correct_predictions = 0
 test_index = 0
 output_mse = 0
@@ -192,10 +177,11 @@ iter_validation = 800
 print('start stochastic NN')
 # for each input in the test set
 for r in range(iter_validation):
+    """
+    [Step 9]: Convert BNs to SNs
+    """
     x = x_test[test_index]
     print(test_index)
-
-    # build input SN matrix
     SN_input_matrix = np.full((img_rows, img_cols, length), False)
     for i in range(img_rows):
         for j in range(img_cols):
@@ -203,7 +189,9 @@ for r in range(iter_validation):
     del(x)
     print('inputs generated')
 
-    # Generate the HOModel
+    """
+    [Step 10]: Build and run a SNN
+    """
     hoModel = HOModel(SN_input_matrix, kBits=kBits)
     del(SN_input_matrix)
 
@@ -212,22 +200,20 @@ for r in range(iter_validation):
     hoModel.SetWeights(weight_1_SNs)
     hoModel.SetZeroBias(8)
     hoModel.SetListIndex(listIndex1)
-    #hoModel.SetBias(bias_1_SNs)
-    hoConvLayer = HOConvolution(4, 4, kBits=kBits, baseMode="Mux", activationFunc="STanh", use_bias="False")
-
-    hoModel.Activation(hoConvLayer, stride=1)
+    hoConvLayer = HOConvolution(4, 4, kBits=kBits, modeAddConv="Mux", activationFunc="STanh", use_bias="False")
+    hoModel.Run(hoConvLayer, stride=1)
     del(hoConvLayer)
     print('conv layer 1 done')
 
     if(test_index % 100 == 0):
-        ut.SaveInTxtFormat('../results/v19.2_testCase6_verif_131_conv1', test_index,
+        ut.SaveInTxtFormat('../results/testCase6_verif_131_conv1', test_index,
                            hoModel.GetOutputMatrix(), 8, 25, 25,
                            layer2model, x_test)
         print(str(test_index + 1) + ' conv 1 layer results saved in txt format')
 
     # max pooling layer
     hoMaxLayer = HOMaxPoolingExact(2, 2, kBits=kBits)
-    hoModel.Activation(hoMaxLayer, stride=2)  # Stride:2, filterSize:2x2
+    hoModel.Run(hoMaxLayer, stride=2)  # Stride:2, filterSize:2x2
     del (hoMaxLayer)
     print('max pool 1 done')
 
@@ -236,22 +222,21 @@ for r in range(iter_validation):
     hoModel.SetWeights(weight_2_SNs)
     hoModel.SetZeroBias(8)
     hoModel.SetListIndex(listIndex2)
-    #hoModel.SetBias(bias_2_SNs)
-    hoConvLayer = HOConvolution(5, 5, kBits=kBits, baseMode="APC", activationFunc="BTanh", use_bias="False",
+    hoConvLayer = HOConvolution(5, 5, kBits=kBits, modeAddConv="APC", activationFunc="BTanh", use_bias="False",
                                 scale=1, constantH=0.8)
-    hoModel.Activation(hoConvLayer, stride=1)
+    hoModel.Run(hoConvLayer, stride=1)
     del (hoConvLayer)
     print("conv layer 2 done")
 
     if (test_index % 100 == 0):
-        ut.SaveInTxtFormat('../results/v19.2_testCase6_verif_131_conv2', test_index,
+        ut.SaveInTxtFormat('../results/testCase6_verif_131_conv2', test_index,
                            hoModel.GetOutputMatrix(), 8, 8, 8,
                            layer5model, x_test)
         print(str(test_index + 1) + ' conv layer 2 results saved in txt format')
 
     # max pooling layer 2
     hoMaxLayer = HOMaxPoolingExact(2, 2, kBits=kBits)
-    hoModel.Activation(hoMaxLayer, stride=2) # Stride:2, filterSize:2x2
+    hoModel.Run(hoMaxLayer, stride=2) # Stride:2, filterSize:2x2
     del(hoMaxLayer)
     print('max pool 2 done')
 
@@ -260,8 +245,8 @@ for r in range(iter_validation):
     hoModel.SetDenseWeights(dense_weight_SNs)
     hoModel.SetDenseBias(dense_biases_SNs)
     hoModel.SetListIndexDense(listIndexDense)
-    hoDenseLayer = HOConnected(kBits=kBits, stochToInt="APC", activationFunc="None", use_bias="True")
-    hoModel.Activation(hoDenseLayer, num_classes=num_classes)
+    hoDenseLayer = HOConnected(kBits=kBits, modeAddConn="APC", activationFunc="None", use_bias="True")
+    hoModel.Run(hoDenseLayer, num_classes=num_classes)
     del(hoDenseLayer)
     ################### For debugging purpose, save the intermidiate results in the local variable ###################
     dense_output = hoModel.GetOutputMatrix()
@@ -292,6 +277,9 @@ for r in range(iter_validation):
     print("SNN results of dense layer")
     print(np.argmax(hybrid_output))
 
+    """
+    [Step 11]: Check the inference accuracy
+    """
     if(np.argmax(hybrid_output) == np.argmax(y_test[test_index])):
         correct_predictions = correct_predictions + 1
     test_index = test_index + 1

@@ -5,7 +5,7 @@
 #                                                                             #
 ###############################################################################
 #
-#  Filename:	testCase6_verif_131_sn4096.py
+#  Filename:	testCase5_verif_131.py
 #  Author/Date:	Junseok Oh / 2020-02-27
 #  Initiator:	Florian Neugebauer
 ################################################################################
@@ -41,7 +41,7 @@ global_variables.DefineGlobalVariables()
 """
 [Step 2]: Define callback functions
 """
-import WeightScaling_verif_131
+import WeightScaling_testCase5_verif_131
 
 """ 
 [Step 3]: Define activation functions of a BNN
@@ -94,7 +94,7 @@ global_variables.bnModel.SetId(1) # Set as the 1st model
 global_variables.bnModel[0] = Conv2D(8, kernel_size=(4, 4),
                                      input_shape=input_shape,
                                      use_bias=False,
-                                     kernel_regularizer=regularizers.l1(0.001))
+                                     kernel_regularizer=regularizers.l1(0))
 global_variables.bnModel[1] = Activation(first_layer_activation)
 global_variables.bnModel[2] = MaxPooling2D(pool_size=(2, 2))
 global_variables.bnModel[3] = Conv2D(8, kernel_size=(5, 5),
@@ -114,31 +114,10 @@ global_variables.bnModel.Compile(loss=keras.losses.mse,
 #                             batch_size=batch_size,
 #                             epochs=epochs,
 #                             verbose=0,
-#                             callbacks=[WeightScaling_verif_131.WeightScale()],
+#                             callbacks=[WeightScaling_testCase5_verif_131.WeightScale()],
 #                             validation_data=(x_test, y_test))
-global_variables.bnModel.Load_weights('../results/#Epoch20_weights_of_1st_model_verif_131.h5')
+global_variables.bnModel.Load_weights('../results/#Epoch20_weights_of_1st_model_testCase5_verif_131.h5')
 global_variables.bnModel.Evaluate(x_test[:800], y_test[:800], verbose=0, indexModel=1)
-
-""" 
-[Step 6]: Optimize the BNN
-"""
-# Optimize the neural network
-#global_variables.bnModel.OptimizeNetwork('verif_131',
-#                                         '../results/#Epoch20_weights_of_1st_model_verif_131.h5',
-#                                         '../results/#Epoch1_weights_of_1st_model_verif_131.h5',
-#                                         WeightScaling_verif_131,
-#                                         cntIter=3,
-#                                         tupleLayer=(1, ),
-#                                         x_train=x_train,
-#                                         y_train=y_train,
-#                                         x_test=x_test,
-#                                         y_test=y_test,
-#                                         epochs=epochs-1,
-#                                         batch_size=batch_size
-#                                         )
-print("Optimization is done")
-global_variables.bnModel.Load_weights('../results/#Epoch57_weights_of_2nd_model_verif_131.h5')
-global_variables.bnModel.Evaluate(x_test[:800], y_test[:800], verbose=0, indexModel=2)
 
 # Get the layer models from bnModel
 layer1model = global_variables.bnModel[0]
@@ -154,7 +133,7 @@ layer9model = global_variables.bnModel[8]
 """ 
 [Step 7]: Extract trained parameters
 """
-kBits = 12
+kBits = 11
 length = 2 ** kBits
 ut = HOUtils(kBits=kBits)
 model = global_variables.bnModel.GetModel()
@@ -206,7 +185,7 @@ for r in range(iter_validation):
     print('conv layer 1 done')
 
     if(test_index % 100 == 0):
-        ut.SaveInTxtFormat('../results/testCase6_verif_131_conv1', test_index,
+        ut.SaveInTxtFormat('../results/testCase5_verif_131_conv1', test_index,
                            hoModel.GetOutputMatrix(), 8, 25, 25,
                            layer2model, x_test)
         print(str(test_index + 1) + ' conv 1 layer results saved in txt format')
@@ -229,7 +208,7 @@ for r in range(iter_validation):
     print("conv layer 2 done")
 
     if (test_index % 100 == 0):
-        ut.SaveInTxtFormat('../results/testCase6_verif_131_conv2', test_index,
+        ut.SaveInTxtFormat('../results/testCase5_verif_131_conv2', test_index,
                            hoModel.GetOutputMatrix(), 8, 8, 8,
                            layer5model, x_test)
         print(str(test_index + 1) + ' conv layer 2 results saved in txt format')

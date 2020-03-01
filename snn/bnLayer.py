@@ -1,69 +1,15 @@
-#
 ###############################################################################
 #                                                                             #
-#							 Copyright (c)									  #
+#                            Copyright (c)                                    #
 #                         All rights reserved.                                #
 #                                                                             #
 ###############################################################################
 #
-#  Filename:     bnLayer.py
-#
-###############################################################################
-#  Description:
-#  
-#  (For a detailed description look at the object description in the UML model)
-#  
-###############################################################################
-# History
+#  Filename:	bnLayer.py
+#  Description:	
+#  Author/Date:	Junseok Oh / 2020-02-27
+#  Initiator:	Florian Neugebauer
 ################################################################################
-# File:		   bnLayer.py
-# Version:     17.0
-# Author/Date: Junseok Oh / 2019-07-20
-# Change:      (SCR_V16.0-1): Change the number of test samples
-# Cause:       -
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   bnLayer.py
-# Version:     15.0
-# Author/Date: Junseok Oh / 2019-07-01
-# Change:      (SCR_V14.0-1): Modularize the classes, change the file names
-#              (SCR_V14.0-7): Allow user to set the number of possible iterations
-# Cause:       -
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   bnlayer.py
-# Version:     12.0 
-# Author/Date: Junseok Oh / 2019-06-27
-# Change:      (SCR_V11.0-7): Change the whole sw structure
-# Cause:       -
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   bnlayer.py
-# Version:     9.0
-# Author/Date: Junseok Oh / 2019-06-07
-# Change:      (SCR_v8.0-7): Fix bug in finding the number of conv layers
-#              (SCR_V8.0-9): Fix bug in GetModel
-# Cause:       bug fix
-# Initiator:   Junseok Oh
-################################################################################
-# File:		   bnlayer.py
-# Version:     8.0
-# Author/Date: Junseok Oh / 2019-05-23
-# Change:      (SCR_v6.4-18): Created
-#              (SCR_V6.4-20): Fix bug in std deviation
-#              (SCR_V6.4-21): Re-train the model again if it fails
-#              (SCR_V6.4-22): Create PlotCurrentWeights
-#              (SCR_V6.4-23): Upgrade in replacing
-#              (SCR_V6.4-27): Upgrade in replacing
-#              (SCR_V6.4-28): Encapsulate the functions
-#              (SCR_V6.4-30): Upgrade in replacing (use intMax, limit the number of iteration, load 1st model back when retraining fails)
-#              (SCR_V6.4-37): Upgrade in replacing (the number of non-zero elements must be smaller than before, sign change after permutation)
-#              (SCR_V6.4-38): Upgrade in replacing (user-defined the number of iteration, handle multiple layers)
-#              (SCR_V6.4-40): Upgrade in replacing (use intAvg to determine further iteration)
-#              (SCR_V6.4-41): Bug fix, Save and Load weights in / from 1st Model
-# Cause:       new
-# Initiator:   Junseok Oh
-###############################################################################
 import keras
 from keras.models import Sequential, Model
 import numpy as np
@@ -72,6 +18,7 @@ import copy
 from snn.hoUtils import HOUtils
 import global_variables
 import statistics
+
 
 class BNModel(object):
     def __init__(self, numLayer):
@@ -161,7 +108,6 @@ class BNModel(object):
 
     def GetWeights(self, indexLayer):
         # Copy the weighs from the given model
-        #self.weights = copy.deepcopy(self.model.get_layer(index=indexLayer).get_weights())
         self.weights.append(copy.deepcopy(self.model.get_layer(index=indexLayer).get_weights()))
 
     def ClearWeights(self):
@@ -174,7 +120,6 @@ class BNModel(object):
         self.weights = copy.deepcopy(self.weightsShadow)
 
     def SaveWeightsIn1stModel(self):
-        #self.weights1stModel = copy.deepcopy(self.model.get_layer(index=indexLayer).get_weights())
         for i in range(self.numLayer):
             self.weights1stModel.append(copy.deepcopy(self.model.get_layer(index=i+1).get_weights()))
 
@@ -188,21 +133,66 @@ class BNModel(object):
     def GetCntPossibleIteration(self):
         return self.cntPossibleIteration
 
-    def OptimizeNetwork(self, testNumber, titleLargeEpochWeight, titleSmallEpochWeight, callBackFunction,
+    def OptimizeNetwork(self, titleTest, titleLastEpochWeight, titleFirstEpochWeight, callBackFunction,
                         cntIter=1, tupleLayer=(1, ), x_train=0, y_train=0, x_test=0, y_test=0, epochs=1, batch_size=128):
+        """
+        Optimizing a given neural network such that its implementation using stochastic circuits would have better accuracy
+
+        Parameters
+        ----------
+        titleTest: string
+            the title of a python main file
+
+        titleLastEpochWeight: string
+            the title of a h5 file containing a trained weights and biases from the last epoch
+
+        titleFirstEpochWeight: string
+            the title of a h5 file containing a trained weights and biases from the first epoch
+
+        callBackFunction: object
+            the callback function for saving and scaling weights during training the neural network
+
+        cntIter: int
+            the maximum number of iteration for retraining the neural network
+
+        tupleLayer: tuple
+            the indices of layer over which the weights retraining would be performed
+
+        x_train: object
+            the inputs of training samples
+
+        y_train: object
+            the labels of training samples
+
+        x_test: obejct
+            the inputs of training samples
+
+        y_test: obejct
+            the labes of training samples
+
+        epochs: int
+            the number of epoch times to retrain the neural network
+
+        batch_size: int
+            the size of the batch
+        """
         cntIteration = 0
         bIteration = True
         bRetraining = True
 
-        # Determine the listIndexNonOutliers and listIndexOutliers from the weights of Large Epoch
-        self.Load_weights(titleLargeEpochWeight)
+        # Get the weights from the last Epoch
+        self.Load_weights(titleLastEpochWeight)
         self.ClearWeights()
         for e in tupleLayer:
             self.GetWeights(e)
-        self.InitializeIndex(tupleLayer, testNumber, cntIter)
 
-        # Get the weights from Small Epoch
-        self.Load_weights(titleSmallEpochWeight)
+        """
+        [Part 1]: Categorize kernels according to their sparsity
+        """
+        self.CategorizeKernels(titleTest, cntIter)
+
+        # Get the weights from the first Epoch
+        self.Load_weights(titleFirstEpochWeight)
         self.ClearWeights()
         for e in tupleLayer:
             self.GetWeights(e)
@@ -218,13 +208,18 @@ class BNModel(object):
 
         while (bIteration):
             cntIteration += 1
-            # Alter the weights that will be used as the initialization values of the model
-            self.ReplaceOutliers(testNumber)
+            """
+            [Part 2]: Replace kernels with insufficient sparsity
+            """
+            self.ReplaceOutliers(titleTest)
 
             # Set weights on the model
             for e in tupleLayer:
                 self.SetWeights(e)
 
+            """
+            [Part 3]: Retrain until the target sparsity is reached
+            """
             # Retraining the model
             self.Compile(loss=keras.losses.mse,
                          optimizer=keras.optimizers.Adadelta(),
@@ -237,10 +232,9 @@ class BNModel(object):
                      callbacks=[callBackFunction.WeightScale()],
                      validation_data=(x_test, y_test))
             self.Load_weights('../results/#Epoch' + str(global_variables.cntEpochs) +
-                              '_weights_of_2nd_model_' + str(testNumber) + '.h5')
+                              '_weights_of_2nd_model_' + str(titleTest) + '.h5')
 
             # Evalute the model
-            self.Evaluate(x_test[:500], y_test[:500], verbose=0, indexModel=2)
             self.Evaluate(x_test[:800], y_test[:800], verbose=0, indexModel=2)
 
             # Get weights from the model
@@ -251,8 +245,8 @@ class BNModel(object):
             print("Plot the weights after retraining")
             for i in range(self.numWeightsLayer):
                 self.PlotCurrentWeights(i,
-                                        str(i+1)+' layer weights_'+'#' + str(cntIteration) + ' Plots of weights after retraining_' + str(testNumber),
-                                        '../results/'+str(i+1)+' layer weights_'+'#' + str(cntIteration) + ' Weights after retraining_' + str(testNumber) +'.html')
+                                        str(i+1)+' layer weights_'+'#' + str(cntIteration) + ' Plots of weights after retraining_' + str(titleTest),
+                                        '../results/'+str(i+1)+' layer weights_'+'#' + str(cntIteration) + ' Weights after retraining_' + str(titleTest) +'.html')
 
             # Determine whether it will iterate(and/or retrain) more or not
             bIteration, bRetraining = self.DetermineIteration()
@@ -266,10 +260,19 @@ class BNModel(object):
                 # i.e. It turns out that retraining(optimization) is not valid.
                 self.LoadWeightsFrom1stModel()
 
+    def CategorizeKernels(self, titleTest, cntIter):
+        """
+        Categorizing kernels as either Outliers or NonOutliers
 
-    def InitializeIndex(self, tupleLayer, testNumber, cntIter):
+        Parameters
+        ----------
+        titleTest: string
+            the title of a python main file
+
+        cntIter: int
+            the maximum number of iteration for retraining the neural network
+        """
         # Initialize the dimensions of the weights
-        #self.numWeightsLayer = int(len(self.weights)/ len(self.weights[0]))
         self.numWeightsLayer = len(self.weights)
 
         # Initialize the variables
@@ -283,7 +286,6 @@ class BNModel(object):
         # Initialize the list
         self.listIndexOutliers = [[] for i in range(self.numWeightsLayer)]
         self.listIndexNonOutliers = [[] for i in range(self.numWeightsLayer)]
-        #listCnt = [0 for i in range(self.numOutputSlices)]
         listCnt = [0 for i in range(self.numWeightsLayer)]
         listIndexZero = [[] for i in range(self.numWeightsLayer)]
         listIndexNonZero = [[] for i in range(self.numWeightsLayer)]
@@ -292,32 +294,32 @@ class BNModel(object):
         print("Plot the weights of 1st model")
         for i in range(self.numWeightsLayer):
             self.PlotCurrentWeights(i,
-                                    'Plots of weights of 1st model_' + str(i+1) + ' layer weights_' + str(testNumber),
-                                    '../results/Weights of 1st model_' + str(i+1) + ' layer weights_'  + str(testNumber) + '.html')
+                                    'Plots of weights of 1st model_' + str(i+1) + ' layer weights_' + str(titleTest),
+                                    '../results/Weights of 1st model_' + str(i+1) + ' layer weights_'  + str(titleTest) + '.html')
 
         # Save the weights into weights1stModel
         self.SaveWeightsIn1stModel()
 
-        # Step 3: Find non-sparse solution
+        # Find non-sparse solutions
         for i in range(self.numWeightsLayer):
             print(str(self.numWeightsLayer + 1) + "layer's weights information")
 
-            # Step 3.1.1: Find the number of non-zero solutions in each set of weights
+            # Step 1: Find the number of non-zero weights in each kernel
             listCnt[i] = self.FindNumberNonZero(i)
             print("listCnt with all-zero weights: " + str(listCnt[i]))
 
-            # Step 3.1.2: Find the avg value out of the listCnt
+            # Step 2: Find the average value out of the listCnt
             self.listAvg.append(statistics.mean(listCnt[i]))
 
-            # Step 3.1.3: Remove all-zero weights from the listCnt
+            # Step 3: From the listCnt, remove kernel containing all-zero weights 
             self.RemoveAllzeroWeights(listCnt[i], listIndexZero[i], listIndexNonZero[i])
             print("listCnt without all-zero weights : "+str(listCnt[i]))
 
-            # Step 3.2: Calculate the mean and variance of the numbers
+            # Step 4: Calculate the mean and variance of the numbers
             self.mean.append(np.mean(listCnt[i]))
             self.stdDeviation.append(np.std(listCnt[i]))
 
-            # Step 3.3: Find outliers which are far from the zero after rescaling using z-score
+            # Step 5: Find outliers which are far from the zero after rescaling using z-score
             for outputSlices in range(len(listCnt[i])):
                 listCnt[i][outputSlices] = (listCnt[i][outputSlices] - self.mean[i]) / (self.stdDeviation[i])
                 if (listCnt[i][outputSlices] > 0.5): # 0.5 represents Top 30% in the normalized distribution
@@ -327,17 +329,22 @@ class BNModel(object):
             print("Index of Outliers: " + str(self.listIndexOutliers[i]))
             print("Index of NonOutliers: " + str(self.listIndexNonOutliers[i]))
 
-        # Count the number of NonOutliers
-        #self.cntPossibleIteration = len(self.listIndexNonOutliers)
-
         # It will iterate up to the defined counts
         self.SetCntPossibleIteration(cntIter)
 
-    def ReplaceOutliers(self, testNumber):
+    def ReplaceOutliers(self, titleTest):
+        """
+        Altering the weights that will be used as new initialization values of the model
+
+        Parameters
+        ----------
+        titleTest: string
+            the title of a python main file
+        """
         print("Remained iteration: " + str(self.cntPossibleIteration))
         self.cntReplaceOutliers += 1
 
-        # Step 4: Replace outliers by non-outliers which are randomly selected
+        # Replace outliers by non-outliers which are randomly selected
         for n in range(self.numWeightsLayer):
             # Define the buffer of weights
             tempListWeights = [[[[] for i in range(self.numInputSlices[n])] for i in range(self.numCol[n])] for i in range(self.numRow[n])]
@@ -345,8 +352,8 @@ class BNModel(object):
             # Plot the weights before replacing
             print("Plot the weights before replacing")
             self.PlotCurrentWeights(n,
-                                    str(n+1) + ' layer weights_'+'#' + str(self.cntReplaceOutliers) + ' Plots of weights before replacing_' + str(testNumber),
-                                    '../results/' + str(n+1) + ' layer weights_'+'#' + str(self.cntReplaceOutliers) + ' Weights before replacing_' + str(testNumber) + '.html')
+                                    str(n+1) + ' layer weights_'+'#' + str(self.cntReplaceOutliers) + ' Plots of weights before replacing_' + str(titleTest),
+                                    '../results/' + str(n+1) + ' layer weights_'+'#' + str(self.cntReplaceOutliers) + ' Weights before replacing_' + str(titleTest) + '.html')
 
             # Replace the weights by the one that comes from Non-outliers
             for l in range(len(self.listIndexOutliers[n])):
@@ -377,12 +384,23 @@ class BNModel(object):
                 # Plot the weights after replacing
                 print("Plot the weights after replacing")
                 self.PlotCurrentWeights(n,
-                                        str(n+1) + ' layer weights_'+'#' + str(self.cntReplaceOutliers) + ' Plots of weights after replacing_' + str(testNumber),
-                                        '../results/' + str(n+1) + ' layer weights_'+'#' + str(self.cntReplaceOutliers) + ' Weights after replacing_' + str(testNumber) + '.html')
+                                        str(n+1) + ' layer weights_'+'#' + str(self.cntReplaceOutliers) + ' Plots of weights after replacing_' + str(titleTest),
+                                        '../results/' + str(n+1) + ' layer weights_'+'#' + str(self.cntReplaceOutliers) + ' Weights after replacing_' + str(titleTest) + '.html')
 
     def DetermineIteration(self):
-        bIteration = False  # It indicates whether we need further retraining or not
-        bRetraining = True  # It represents the validity of whole retraining process
+        """
+        Determining whether it will iterate(and/or retrain) more or not
+
+        Returns
+        -------
+        bIteration: bool
+            It indicates whether we need further retraining or not
+
+        bRetraining: bool
+            It represents the validity of whole retraining process
+        """
+        bIteration = False
+        bRetraining = True
 
         # Initialize the lists
         listCnt = [0 for i in range(self.numWeightsLayer)]
@@ -392,24 +410,19 @@ class BNModel(object):
         listBoolIteration = []
         listBoolRetraining = []
 
-        # Find the max value
+        # Find the current average value
         for i in range(self.numWeightsLayer):
-            # Step 3.1.1: Find the number of non-zero solutions in each set of weights
+            # Step 1: Find the number of non-zero weights in each kernel
             listCnt[i] = self.FindNumberNonZero(i)
             print("listCnt with all-zero weights: "+str(listCnt[i]))
 
-            # Step 3.1.2: Find the avg value out of the listCnt
+            # Step 2: Find the average value out of the listCnt
             listAvg.append(statistics.mean(listCnt[i]))
 
-            # Step 3.1.3: Remove all-zero weights from the listCnt
-            self.RemoveAllzeroWeights(listCnt[i], listIndexZero[i], listIndexNonZero[i])
-            print("listCnt without all-zero weights : "+str(listCnt[i]))
-
-
-        # Compare the max values
+        # Compare the average values
         self.cntPossibleIteration -= 1
         for i in range(self.numWeightsLayer):
-            # If the avg value is equal or larger than before
+            # If the average value is equal or larger than before
             if (listAvg[i] >= self.listAvg[i]):
                 # If it has iterated as many times as the number of NonOutliers
                 if (self.cntPossibleIteration == 0):
@@ -437,7 +450,9 @@ class BNModel(object):
         return bIteration, bRetraining
 
     def FindNumberNonZero(self, indexLayer):
-        # Step 3.1.1: Find the number of non-zero solutions in each set of weights
+        """
+        Finding the number of non-zero weights in each kernel
+        """
         listCnt = [0 for i in range(self.numOutputSlices[indexLayer])]
         for outputSlices in range(self.numOutputSlices[indexLayer]):
             for inputSlices in range(self.numInputSlices[indexLayer]):
@@ -449,7 +464,9 @@ class BNModel(object):
         return copy.deepcopy(listCnt)
 
     def RemoveAllzeroWeights(self, listCnt, listIndexZero, listIndexNonZero):
-        # Step 3.1.2: Remove all-zero weights from the listCnt
+        """
+        From the listCnt, Removing kernel containing all-zero weights
+        """
         listCntCopied = listCnt[:]
         for i in range(len(listCntCopied)):  # Python doesn't update the counter of listCopied during the iteration
             if (listCntCopied[i] == 0):
@@ -459,6 +476,20 @@ class BNModel(object):
                 listIndexNonZero.append(i)
 
     def PlotCurrentWeights(self, indexLayer, title, filename):
+        """
+        Plotting weights in a specific convolution layer in a html file
+
+        Parameters
+        ----------
+        indexLayer: int
+            the index of the convolution layer
+
+        title: string
+            the title of the plot
+
+        filename: string
+            the name of the html file
+        """
         values = [i + 1 for i in range(self.numRow[indexLayer] * self.numCol[indexLayer] * self.numInputSlices[indexLayer])]
         weightsSorted = self.weights[indexLayer][0].reshape(self.numRow[indexLayer] * self.numCol[indexLayer] *
                                                             self.numInputSlices[indexLayer] * self.numOutputSlices[indexLayer])

@@ -1,286 +1,40 @@
-#
 ###############################################################################
 #                                                                             #
-#							 Copyright (c)									  #
+#                            Copyright (c)                                    #
 #                         All rights reserved.                                #
 #                                                                             #
 ###############################################################################
 #
-#  Filename:     hoLayer.py
-#
-###############################################################################
-#  Description:
-#  
-#  (For a detailed description look at the object description in the UML model)
-#  
-###############################################################################
-# History
+#  Filename:	hoLayer.py
+#  Description:	
+#  Author/Date:	Junseok Oh / 2020-02-27
+#  Initiator:	Florian Neugebauer
 ################################################################################
-# File:        holayer.py
-# Version:     19.2
-# Author/Date: Junseok Oh / 2020-01-27
-# Change:      (SCR_V19.1-2): Make small scale factor available in Stanh
-# Cause:       Bug found
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:        verif_151, holayer.py
-# Version:     19.0
-# Author/Date: Junseok Oh / 2019-11-29
-# Change:      (SCR_V18.3-1): Implement Relu by the accurate SC-Max circuit
-# Cause:       -
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:        verif_131, hoModel, holayer, hoUtils.py
-# Version:     18.3
-# Author/Date: Junseok Oh / 2019-11-26
-# Change:      (SCR_V18.2-1): Use stochastic numbers for the dense layer's biases
-#              (SCR_V18.2-2): Implement the Mux-based addition in dense layers
-# Cause:       -
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   hoLayer.py
-# Version:     18.2
-# Author/Date: Junseok Oh / 2019-11-23
-# Change:      (SCR_V18.1-2): Update dense layer bias addition
-# Cause:       -
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   hoLayer.py
-# Version:     15.0
-# Author/Date: Junseok Oh / 2019-07-01
-# Change:      (SCR_V14.0-1): Modularize the classes, change the file names
-#              (SCR_V14.0-2): Generate the LUT for Relu outside
-#              (SCR_V14.0-3): Generate the LUT for Tanh outside
-#              (SCR_V14.0-4): Set baseMode, stochToInt on the higher class
-# Cause:       -
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   holayer.py
-# Version:     14.0
-# Author/Date: Junseok Oh / 2019-07-01
-# Change:      (SCR_V13.0-1): Place CreateSN on the higher class
-#              (SCR_V13.0-2): Place StochToInt on the higher class
-#              (SCR_V13.0-4): Make snLength on the higher class
-#              (SCR_V13.0-5): Remove unnecessary codes and comments
-# Cause:       -
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   holayer.py
-# Version:     13.0
-# Author/Date: Junseok Oh / 2019-06-30
-# Change:      (SCR_V12.0-1): Set scale factor of activation functions by users
-#              (SCR_V12.0-2): Calibrate SCReLU
-# Cause:       -
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   holayer.py
-# Version:     12.0
-# Author/Date: Junseok Oh / 2019-06-25
-# Change:      (SCR_V11.0-5): Update UpDownCounterReLU, UpDownCounter(half state's altered)
-#              (SCR_V11.0-7): Change the whole sw structure
-# Cause:       -
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   holayer.py
-# Version:     11.0
-# Author/Date: Junseok Oh / 2019-06-20
-# Change:      (SCR_V10.0-1): Pre-processing in APCs
-# Cause:       -
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   holayer.py
-# Version:     10.0
-# Author/Date: Junseok Oh / 2019-06-17
-# Change:      (SCR_V9.0-1): Deploy SC-based ReLU
-#              (SCR_V9.0-2): Deploy APCs (8, 16, 25bits)
-#              (SCR_V9.0-3): Generate snLookupTableNumAPC
-# Cause:       Catch up with the recent new research outcomes
-# Initiator:   Junseok Oh
-################################################################################
-# File:		   holayer.py
-# Version:     9.0
-# Author/Date: Junseok Oh / 2019-06-07
-# Change:      (SCR_V8.0-2): Fix bug of set the state in ActivationFuncTanhSN
-#              (SCR_V8.0-3): develop LUT-based APC
-#              (SCR_V8.0-4): develop 8bit APC
-#              (SCR_V8.0-5): Increase dimension readability by shape
-#              (SCR_V8.0-6): Apply LUT-based techniques in dense layer
-# Cause:       Performance improvements
-# Initiator:   Junseok Oh
-################################################################################
-# File:		   holayer.py
-# Version:     8.0
-# Author/Date: Junseok Oh / 2019-05-23
-# Change:      (SCR_V6.4-1): NN Optimization-JSO (Make use of listIndex not to consider zero weights in addition)
-#              (SCR_V6.4-2): Fix bug in the number of states in the ActivationFuncTanhSN
-#              (SCR_V6.4-9): Update Stanh with LUT for adaptive function
-#              (SCR_V6.4-11): Fix bug of bias missing (use_bias = 'True')
-#              (SCR_V6.4-13): Update HOModel initialization
-#              (SCR_V6.4-24): Skip convolution if the weights are all zero
-# Cause:       -
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   holayer.py, //test.py
-# Version:     6.4 (SCR_V6.3-2)
-# Author/Date: Junseok Oh / 2019-03-29
-# Change:      Make use of the Lookup table for the activation function Relu
-# Cause:       Boost up the execution time of activation function Relu
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   holayer.py, //test.py
-# Version:     6.4 (SCR_V6.3-1)
-# Author/Date: Junseok Oh / 2019-03-24
-# Change:      Make use of the Lookup table for the activation function STanh
-# Cause:       Boost up the execution time of activation function STanh
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   holayer.py, //test.py
-# Version:     6.3 (SCR_V6.2-1)
-# Author/Date: Junseok Oh / 2019-03-17
-# Change:      Sift out the values over the snLength
-# Cause:       Boost up the execution time of add operation using MUX
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   holayer.py, //test.py
-# Version:     6.2 (SCR_V6.1-4)
-# Author/Date: Junseok Oh / 2019-02-19
-# Change:      Define STanh and BTanh
-# Cause:       Rename the activation functions
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   holayer.py, //test.py
-# Version:     6.1 (SCR_V6.0-3)
-# Author/Date: Junseok Oh / 2019-01-31
-# Change:      Let convolution layer to count biases in the case of the normal model
-# Cause:       Bug that convolution layer didn't count the bias value should be fixed
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   holayer.py, //test.py
-# Version:     6.1 (SCR_V6.0-2)
-# Author/Date: Junseok Oh / 2019-01-31
-# Change:      Let convolution layer to ignore biases in the case of non-bias model
-# Cause:       Handle non-bias model
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   holayer.py, //test.py
-# Version:     6.1 (SCR_V6.0-1)
-# Author/Date: Junseok Oh / 2019-01-31
-# Change:      Delete the APC function which was replaced by SumUpAPC at V6.0
-# Cause:       Unused function exists
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   holayer.py, //test.py
-# Version:     6.0 (SCR_V5.4-2)
-# Author/Date: Junseok Oh / 2019-01-10
-# Change:      Perform the dense layer operations using binary number
-# Cause:       For debugging purpose
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   holayer.py, //test.py
-# Version:     6.0 (SCR_V5.4-1)
-# Author/Date: Junseok Oh / 2019-01-01
-# Change:      Create new methods in HOActivation
-#              Let a user to select Mux-based or APC-based inner product
-# Cause:       APC should be used for Conv and Dense layer
-# Initiator:   Florian Neugebauer
-################################################################################
-# File:		   holayer.py, test.py
-# Version:     5.4 (SCR_V5.3-3)
-# Author/Date: Junseok Oh / 2018-11-20
-# Change:      Change the order of weights in the convolution operation 
-# Cause:       The order of weights in Keras is different with SNN
-# Initiator:   Florian Neugebauer
-################################################################################
-# Version:     5.2 (SCR_V5.1-3)
-# Author/Date: Junseok Oh / 2018-10-28
-# Change:      Change name of numClasses to numOutputClasses
-#              Create new variable numInputClasses and flagFullyConnected
-#              If the layer has been connected,
-#              then, it generates the SN, reshapes the format,
-#                    and every inputClasses are forwarded as the inputs
-# Cause:       Multiple Fully Connected layers should be possible
-# Initiator:   Florian Neugebauer
-################################################################################
-# Version:     5.2 (SCR_V5.1-1)
-# Author/Date: Junseok Oh / 2018-10-28
-# Change:      Place ActivationFunc at HOActivation class
-# Cause:       Fully Connected layer also needs activation functions
-# Initiator:   Florian Neugebauer
-################################################################################
-# Version:     5.1 (SCR_V5.0-1)
-# Author/Date: Junseok Oh / 2018-10-02
-# Change:	   Assign the layer ID (Convolution, MaxPooling, and FullyConnected)
-#              Define the numInputPlanes and numOutputPlanes
-#              Forward the whole planes as inputs for the Convolution layer
-# Cause:       The number of slices has to be variable
-# Initiator:   Florian Neugebauer
-################################################################################
-# Version:     5.0 (SCR_V4.0-1)
-# Author/Date: Junseok Oh / 2018-09-10
-# Change:	   Create the new HOConnected class
-# Cause:       Implementation of fully connected layer with APC-16bit
-# Initiator:   Florian Neugebauer
-################################################################################
-# Version:     4.0 (SCR_V3.0-1)
-# Author/Date: Junseok Oh / 2018-08-22
-# Change:	   Create the new ActivationFuncTanh
-# Cause:       Implementation of stanh
-# Initiator:   Florian Neugebauer
-################################################################################
-# Version:     3.0 (SCR_V2.1-1)
-# Author/Date: Junseok Oh / 2018-08-14
-# Change:	   Change the structure of classes
-#              Create the new HOConvolution
-# Cause:       Implementation of multiple layers
-#              Implementation of convolution
-# Initiator:   Florian Neugebauer
-################################################################################
-# Version:     2.1 (SCR_V2.0-1)
-# Author/Date: Junseok Oh / 2018-07-26
-# Change:	   Simplify the structure of HOMaxPoolingExact
-#              Change the way of bitwise-OR operation using built-in function
-# Cause:       Speed-up the simulation time in the Exact Stochastic MaxPooling
-# Initiator:   Florian Neugebauer
-################################################################################
-# Version:     2.0 (SCR_V1.2-1)
-# Author/Date: Junseok Oh / 2018-07-17
-# Change:	   Create the new HOMaxPoolingExact class
-#              Modify HoLayer class's parameter and Add SelectCircuit method
-# Cause:       Implementing Object-Oriented Exact Stochastic MaxPooling
-# Initiator:   Florian Neugebauer
-################################################################################
-# Version:     1.2 (SCR_V1.1-2)
-# Author/Date: Junseok Oh / 2018-07-06
-# Change:	   Change the conditions of the iteration in Activation
-#              so that it doesn't access an invalid index of input Matrix
-# Cause:       Bug that it failed to Activate when stride is set to 1
-# Initiator:   Junseok Oh
-################################################################################ 
-# Version:     1.2 (SCR_V1.1-1)
-# Author/Date: Junseok Oh / 2018-07-06
-# Change:      Create the only one object of HOMaxPooling at the initial phase
-#              Set the new Stochastic Numbers over the iteration
-#              Create SetListSN in HOMaxPooling class
-# Cause:       Improve Activation performance
-# Initiator:   Junseok Oh
-################################################################################ 
-# Version:     1.1
-# Author/Date: Junseok Oh / 2018-07-05
-# Change:      Change the conditions of the iteration in Activation  
-# Cause:       Bug that it couldn't fill out the some areas of outputMatrix 
-# Initiator:   Junseok Oh
-###############################################################################
-# Version:     1.0
-# Author/Date: Junseok Oh / 2018-06-28
-# Change:      Initial version
-# Cause:       Encapsulate the activations
-# Initiator:   Florian Neugebauer
-###############################################################################
-
+	
 import numpy as np
 import copy
 import pickle
 from snn.hoSnn import HOSnn
+
+"""
+Architecture of the classes
+  HOSnn
+	|			
+ HOLayer	
+	|
+	------------------------------------------------------
+	|				  									 |
+HOMaxPooling											HOActivation
+	|													 |
+	-------------------------------------				 ----------------
+	|									|				 |			    |
+HOMaxPoolingAprox				HOMaxPoolingExact	  HOConv		 HOConn
+	|													 |      	  	|
+------------------------							HOConvolution	HOConnected
+1		   1		   *
+Mux	  Comparator	Counter			
+"""
+
 
 class HOLayer(HOSnn):
     def __call__(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, listIndexDense, **kwargs):
@@ -288,6 +42,14 @@ class HOLayer(HOSnn):
         return output
 
     def Call(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, listIndexDense, **kwargs):
+        """
+        the instance of HOModel calls the instance of HOLayer
+        The specific implementations are specified according to the type of HOLayer instance as follows
+        HOConnected: 		Call()-> DenseFunc()
+        HOConvolution: 		Call()-> ConvFunc()
+        HOMaxPoolingExact: 	Call()-> PoolingFunc()
+        HOMaxPoolingAprox: 	Call()-> PoolingFunc()
+        """
         #This is where the layer's logic lives.
         return inputs
 
@@ -300,6 +62,60 @@ class HOLayer(HOSnn):
 
 class HOActivation(HOLayer):
     def __init__(self, **kwargs):
+        """
+        Parameters
+        ----------
+        modeAddConv: string
+            the type of how to implement addition operations in convolution layers with stochastic circuits
+            Possible elements: "Mux", "APC"
+
+        modeAddConn: string
+            the type of how to implement addition operations in connected layers with stochastic circuits
+            Possible elements: "Normal", "Mux", "APC"
+            With "Normal" mode, SNs are converted to BNs to calculate additions
+
+        activationFunc: string
+            the type of the activation function of a convolution or connected layer
+            Possible elements: "None", "Relu", "ReluByMax", "SCRelu", "STanh", "BTanh"
+            With "Relu", the number of zeros in SN is exhaustly counted
+            With "ReluByMax", Exact max-pooling stochastic circuit is used to perform Relu
+            With "SCRelu", Up/down counter is used to perform Relu after additions implemented by "APC"
+            With "STanh", K-state FSM is used to perform Tanh after additions implemented by "Mux"
+            With "BTanh", Up/down counter is used to perform Tanh after additions implemented by "APC"
+
+        use_bias: string
+            the usage of bias values at a convolution or connected layer
+            Possible elements: "True", "False"
+
+        scale: float
+            the scaling factor of the activation function
+
+        constantH: float
+            the value of constant H for "BTanh"
+
+        Examples of convolution layer configurations
+        -------------------------------------------------
+        SC for addition operations | Activation function
+        (modeAddConv)              | (activationFunc)
+        -------------------------------------------------
+        "Mux"					   | "Relu"
+        "Mux"                      | "ReluByMax"
+        "Mux"					   | "STanh"
+        "APC"					   | "SCRelu"
+        "APC"					   | "BTanh"
+
+        Examples of connected layer configurations
+        -------------------------------------------------
+        SC for addition operations | Activation function
+        (modeAddConn)              | (activationFunc)
+        -------------------------------------------------
+        "Normal"				   | "None"
+        "Normal"				   | "Relu"
+        "Mux"					   | "None"
+        "Mux"					   | "Relu"
+        "APC"					   | "None"
+        "APC"					   | "Relu"
+        """
         super().__init__(**kwargs)
 
         # Set scale factor 1 as default
@@ -310,10 +126,10 @@ class HOActivation(HOLayer):
 
         # Select the activation function to use
         for key in kwargs:
-            if (key == "baseMode"):
-                self.baseMode = kwargs[key]
-            if (key == "stochToInt"):
-                self.stochToInt = kwargs[key]
+            if (key == "modeAddConv"):
+                self.modeAddConv = kwargs[key]
+            if (key == "modeAddConn"):
+                self.modeAddConn = kwargs[key]
             if (key == "activationFunc"):
                 self.activationFunc = kwargs[key]
             if (key == "use_bias"):
@@ -329,7 +145,7 @@ class HOActivation(HOLayer):
         self.snLookupTableNumAPC25 = 0
 
         try:
-            if (self.baseMode == "APC"):
+            if (self.modeAddConv == "APC"):
                 with open('../snLookupTableNumAPC.pkl', 'rb') as input:
                     self.snLookupTableNumAPC8 = pickle.load(input)
                     self.snLookupTableNumAPC16 = pickle.load(input)
@@ -339,7 +155,7 @@ class HOActivation(HOLayer):
             pass
 
         try:
-            if (self.stochToInt == "APC"):
+            if (self.modeAddConn == "APC"):
                 with open('../snLookupTableNumAPC.pkl', 'rb') as input:
                     self.snLookupTableNumAPC8 = pickle.load(input)
                     self.snLookupTableNumAPC16 = pickle.load(input)
@@ -367,6 +183,9 @@ class HOActivation(HOLayer):
             pass
 
     def ActivationFuncReluLUTSN(self, x):
+        """
+        The activation function ReLU implemented by Look-Up Table and stochastic numbers
+        """
         # Represent the binary value into the 1byte decimal value
         sn = np.packbits(x)
 
@@ -382,21 +201,19 @@ class HOActivation(HOLayer):
         else:
             return self.zeroSN
 
-    def ActivationFuncReluSN(self, x):
-        '''input x is a stochastic number'''
-        if sum(x) > len(x) / 2:
-            return x
-        else:
-            return self.zeroSN
-
     def ActivationFuncRelu(selfs, x):
-        '''input x is not a stochastic number'''
+        """
+        The activation function ReLU implemented by binary numbers
+        """
         if (x <= 0):
             return 0
         else:
             return x
 
     def ActivationFuncSTanhLUTSN(self, x, PAR_numState, PAR_scale):
+        """
+        The activation function Tanh implemented by K-state FSM, Look-Up table, and stochastic numbers
+        """
         # Represent the binary value into the 1byte decimal value
         sn = np.packbits(x)
         out = np.empty_like(sn)
@@ -419,29 +236,30 @@ class HOActivation(HOLayer):
         out = np.unpackbits(out)
         return out
 
-    def ActivationFuncTanhSN(self, x, PAR_numState):
-        # the number of states
-        numState = PAR_numState*2
-        # starting state
-        state = max(int(numState/2)-1, 0)
-        out = np.full(len(x), True, dtype=bool)
-        for j in range(len(x)):
-            # Determine the output depending on the current state
-            if ((0 <= state) & (state < int(numState/2))):
-                out[j] = 0
-            else:
-                out[j] = 1
-            # input is True -> increase state
-            if x[j] & (state < numState-1):
-                state = state + 1
-            # input is False -> decrease state
-            elif np.logical_not(x[j]) & (state > 0):
-                state = state - 1
-            # No update at the start or end of the state
-
-        return out
-
     def SumUpAPCLUT(self, x):
+        """
+        Addition operation implemented by APC8, APC16, and APC25 with Look-Up Table
+
+        Returns
+        -------
+        sum: array
+            the total column sum of APCs
+
+        sizePreprocessed: int
+            the number of SN zeros to completly fill up the inputs of each APC
+            e.g. If the input size is 15 and one 16bit APC is supposed to be used,
+                then sizePreprocessed is 1 (= 16-15)
+
+        numAPC25: int
+            the required number of 25bit APCs
+
+        numAPC16: int
+            the required number of 16bit APCs
+
+        numAPC8: int
+            the required number of 8bit APCs
+
+        """
         # Save the input in the buffer
         t1 = copy.deepcopy(x)
         t2 = copy.deepcopy(x)
@@ -564,8 +382,10 @@ class HOActivation(HOLayer):
 
         return sum, sizePreprocessed, numAPC25, numAPC16, numAPC8
 
-
     def Count2Integer(self, x, snLength, numAPC25, numAPC16, numAPC8):
+        """
+        Converting count of APCs to integer
+        """
         sumTotal = 0
 
         for i in range(len(x)):
@@ -575,6 +395,9 @@ class HOActivation(HOLayer):
         return ret
 
     def UpDownCounter(self, x, sizeTensor, constantH, scale):
+        """
+        Up/down counter for activation function "BTanh" after addition operations implemented by APCs
+        """
         # the parameter sizeTensor here refers to (sizeTensor+sizeBias)
 
         # len(x) = m
@@ -614,6 +437,9 @@ class HOActivation(HOLayer):
         return y
 
     def UpDownCounterReLU(self, x, sizeTensor, constantH=0.8, scale=1.232):
+        """
+        Up/down counter for the activation function "SCRelu" after addition operations implemented by APCs
+        """
         # the parameter sizeTensor here refers to (sizeTensor+sizeBias)
 
         # len(x) = m
@@ -663,24 +489,6 @@ class HOActivation(HOLayer):
         return y
 
 
-class HOMaxPooling(HOLayer):
-    def Call(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, listIndexDense, **kwargs):
-        output = self.PoolingFunc(inputs)
-        return output
-
-    def PoolingFunc(self, inputs):
-        raise NotImplementedError
-
-
-class HOConv(HOActivation):
-    def Call(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, listIndexDense, **kwargs):
-        output = self.ConvFunc(inputs, weights, bias, listIndex)
-        return output
-
-    def ConvFunc(self, inputs, weights, bias, listIndex):
-        raise NotImplementedError
-
-
 class HOConn(HOActivation):
     def Call(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, listIndexDense, **kwargs):
         output = self.DenseFunc(inputs, numClasses, denseWeights, denseBias, listIndexDense)
@@ -700,6 +508,37 @@ class HOConnected(HOConn):
         self.zeroSN = self.CreateSN(0)
 
     def DenseFunc(self, inputs, numClasses, denseWeights, denseBias, listIndexDense):
+        """
+        Performing convolution operations in a fully-connected layer
+        It is supposed to be called by "Run" function of HOModel
+        The interface of DenseFunc is "Call" function of HOLayer
+
+        Parameters
+        ----------
+        inputs: object
+            inputs of the fully-connected layer over which a kernel would perform its convolution operation
+
+        numClasses: int
+            the number of output classes of the fully-connected layer
+
+        denseWeights: object
+            the weights of the fully-connected layer
+
+        denseBias: object
+            the biases of the fully-connected layer
+
+        listIndexDense: object (two-dimensional list)
+            the list of indices which indicate the positions of non-near-zero weights
+            e.g. [ [1, 3, 4], [2, 5] ]  indicates the followings:
+                # the number of classes is two
+                # 1st, 3rd, and 4th weight of the first class are not zero
+                # 2nd and 5th weight of the second class are not zero
+
+        Returns
+        -------
+        dense_output: object
+            outputs of the fully-connected layer
+        """
         numInputPlanes, sizeRow, sizeCol, snLength = inputs.shape
 
         # Determine whether the layer uses a bias vector
@@ -727,24 +566,22 @@ class HOConnected(HOConn):
                 self.dense_Product_SN[j, sizeTensor - sizeBias] = denseBias[j]
 
         # ADD in the inner product operations
-        if (self.stochToInt == "Normal"):
+        if (self.modeAddConn == "Normal"):
             for i in range(numClasses):
                 for j in range(sizeTensor):
                     self.dense_output[0, i] = self.dense_output[0, i] + self.StochToInt(self.dense_Product_SN[i, j])
 
         # ADD in the inner product operations
-        elif (self.stochToInt == "Mux"):
+        elif (self.modeAddConn == "Mux"):
             # Make use of listIndex not to consider zero weights in addition operation
             for j in range(numClasses):
                 sizeTensorCompact = len(listIndexDense[j])
                 self.dense_Product_SNCompact = np.full((sizeTensorCompact, self.snLength), False)
-                #self.dense_output_SNCompact = np.full((sizeTensorCompact, self.snLength), False)
                 for i in range(sizeTensorCompact):
                     indexTemp = listIndexDense[j][i]
                     self.dense_Product_SNCompact[i] = self.dense_Product_SN[j, indexTemp]
 
                 s = np.full((sizeTensorCompact, self.snLength), False)
-                #self.convOutput[0] = np.full((self.snLength), False)
 
                 # Do not skip convolution if an one of the weights is not zero
                 if(sizeTensorCompact != 0):
@@ -765,7 +602,7 @@ class HOConnected(HOConn):
                 # convert dense_output_SN into dense_output
                 self.dense_output[0, j] = self.StochToInt(self.dense_output_SN[j])
 
-        elif (self.stochToInt == "APC"):
+        elif (self.modeAddConn == "APC"):
             for i in range(numClasses):
                 count, _, numAPC25, numAPC16, numAPC8  = self.SumUpAPCLUT(self.dense_Product_SN[i])
                 self.dense_output[0, i] = self.Count2Integer(count, self.snLength, numAPC25, numAPC16, numAPC8)
@@ -776,13 +613,19 @@ class HOConnected(HOConn):
             for i in range(len(self.dense_output[0])):
                 self.dense_output[0][i] = self.ActivationFuncRelu(self.dense_output[0][i])
 
-        elif (self.activationFunc == "Tanh"):
-            '''Not implemented'''
-            pass
         elif (self.activationFunc == "None"):
             pass
 
         return self.dense_output
+
+
+class HOConv(HOActivation):
+    def Call(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, listIndexDense, **kwargs):
+        output = self.ConvFunc(inputs, weights, bias, listIndex)
+        return output
+
+    def ConvFunc(self, inputs, weights, bias, listIndex):
+        raise NotImplementedError
 
 
 class HOConvolution(HOConv):
@@ -798,7 +641,6 @@ class HOConvolution(HOConv):
         # Initialize the Convolution output
         self.listProductSN = 0
         self.convOutput = np.full((1, self.snLength), False)
-        #self.convOutputDebug = np.zeros((1))
 
         # Create the Stochastic Number Zero
         self.zeroSN = self.CreateSN(0)
@@ -813,6 +655,34 @@ class HOConvolution(HOConv):
         return self.row
 
     def ConvFunc(self, inputs, weights, bias, listIndex):
+        """
+        Performing convolution operations in a convolution layer
+        It is supposed to be called by "Run" function of HOModel
+        The interface of ConvFunc is "Call" function of HOLayer
+
+        Parameters
+        ----------
+        inputs: object
+            inputs of the convolution layer over which a kernel would perform its convolution operation
+
+        weights: object
+            the weights of the convolution layer
+
+        bias: object
+            the biases of the convolution layer
+
+        listIndex: object (two-dimensional list)
+            the list of indices which indicate the positions of non-near-zero weights
+            e.g. [ [1, 3, 4], [2, 5] ]  indicates the followings:
+                # the number of outputs is two
+                # 1st, 3rd, and 4th weight of the first output are not zero
+                # 2nd and 5th weight of the second output are not zero
+
+        Returns
+        -------
+        convOutput: object
+            outputs of the convolution layer
+        """
         numInputPlanes, sizeRow, sizeCol, snLength = inputs.shape
 
         # Determine whether the layer uses a bias vector
@@ -838,7 +708,7 @@ class HOConvolution(HOConv):
             self.listProductSN[sizeTensor-1] = bias
 
         # ADD in the inner product operations
-        if (self.baseMode == "Mux"):
+        if (self.modeAddConv == "Mux"):
             # Make use of listIndex not to consider zero weights in addition operation
             sizeTensorCompact = len(listIndex)
             self.listProductSNCompact = np.full((sizeTensorCompact, self.snLength), False)
@@ -864,13 +734,12 @@ class HOConvolution(HOConv):
             else:
                 self.convOutput[0] = self.zeroSN
 
-        elif(self.baseMode == "APC"):
+        elif(self.modeAddConv == "APC"):
             count, sizePreprocessed, _, _, _ = self.SumUpAPCLUT(self.listProductSN)
 
         # Activation function
         if(self.activationFunc == "Relu"):
             self.convOutput[0] = self.ActivationFuncReluLUTSN(self.convOutput[0])
-            #self.convOutput[0] = self.ActivationFuncReluSN(self.convOutput[0])
 
         elif(self.activationFunc == "ReluByMax"):
             self.inputsMax[0, 1] = self.convOutput[0]
@@ -883,12 +752,20 @@ class HOConvolution(HOConv):
         elif(self.activationFunc == "STanh"):
             if(sizeTensorCompact != 0):
                 self.convOutput[0] = self.ActivationFuncSTanhLUTSN(self.convOutput[0], sizeTensorCompact, self.scale)
-                #self.convOutput[0] = self.ActivationFuncTanhSN(self.convOutput[0], sizeTensorCompact)
 
         elif(self.activationFunc == "BTanh"):
             self.convOutput[0] = self.UpDownCounter(count, (sizeTensor+sizePreprocessed), self.constantH, self.scale)
 
         return self.convOutput
+
+
+class HOMaxPooling(HOLayer):
+    def Call(self, inputs, weights, bias, listIndex, numClasses, denseWeights, denseBias, listIndexDense, **kwargs):
+        output = self.PoolingFunc(inputs)
+        return output
+
+    def PoolingFunc(self, inputs):
+        raise NotImplementedError
 
 
 class HOMaxPoolingExact(HOMaxPooling):
@@ -939,6 +816,21 @@ class HOMaxPoolingExact(HOMaxPooling):
             self.listCnt.append(0)
 
     def PoolingFunc(self, inputs):
+        """
+        Performing exact max-pooling operations
+        It is supposed to be called by "Run" function of HOModel
+        The interface of PoolingFunc is "Call" function of HOLayer
+
+        Parameters
+        ----------
+        inputs: object
+            inputs of the pooling layer
+
+        Returns
+        -------
+        maxOutput: object
+            outputs of the pooling layer
+        """
         self.CleanUpRegister()
         self.SetListSN(inputs)
 
@@ -1003,6 +895,21 @@ class HOMaxPoolingAprox(HOMaxPooling):
                 self.listSN.append(x[i, j])
 
     def PoolingFunc(self, inputs):
+        """
+        Performing approximate max-pooling operations
+        It is supposed to be called by "Run" function of HOModel
+        The interface of PoolingFunc is "Call" function of HOLayer
+
+        Parameters
+        ----------
+        inputs: object
+            inputs of the pooling layer
+
+        Returns
+        -------
+        maxOutput: object
+            outputs of the pooling layer
+        """
         self.SetListSN(inputs)
 
         # Iterate over the c-bits of the Stochastic number
