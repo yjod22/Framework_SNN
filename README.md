@@ -1,5 +1,6 @@
 # Framework_SNN
 A python-based framework is provided in this repository. This framework proposes ways of optimizing a DCNN such that its implementation using SCs has better accuracy. Sparse solutions derived from L1-regularization contribute to increasing the accuracies in MUX-based addition operations. The sparsity can be enhanced by retraining the DCNN with shuffled pre-trained weights.
+
 https://www.researchgate.net/publication/338677860_Master_Thesis_Software_Framework_for_SC-oriented_Deep_Convolutional_Neural_Networks
 
 ## Instruction guide for optimized SC-oriented DCNNs
