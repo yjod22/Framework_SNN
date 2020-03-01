@@ -63,85 +63,163 @@ https://github.com/yjod22/Framework_SNN/blob/releasedSW/test/
 
 ##  The required python packages for the framework
 absl-py	0.2.2
+
 astor	0.6.2
+
 blas	1
+
 bleach	1.5.0
+
 certifi	2018.8.24
+
 chardet	3.0.4
+
 decorator	4.2.1
+
 gast	0.2.0
+
 git	2.17.0
+
 grpcio	1.12.0
+
 h5py	2.7.1
+
 hdf5	1.10.1
+
 html5lib	0.9999999
+
 icc_rt	2017.0.4
+
 idna	2.7
+
 intel-openmp	2018.0.0
+
 keras	2.1.6
+
 libgpuarray	0.7.6
+
 libprotobuf	3.5.2
+
 libpython	2.1
+
 m2w64-binutils	2.25.1
+
 m2w64-bzip2	1.0.6
+
 m2w64-crt-git	5.0.0.4636.2595836
+
 m2w64-gcc	5.3.0
+
 m2w64-gcc-ada	5.3.0
+
 m2w64-gcc-fortran	5.3.0
+
 m2w64-gcc-libgfortran	5.3.0
+
 m2w64-gcc-libs	5.3.0
+
 m2w64-gcc-libs-core	5.3.0
+
 m2w64-gcc-objc	5.3.0
+
 m2w64-gmp	6.1.0
+
 m2w64-headers-git	5.0.0.4636.c0ad18a
+
 m2w64-isl	0.16.1
+
 m2w64-libiconv	1.14
+
 m2w64-libmangle-git	5.0.0.4509.2e5a9a2
+
 m2w64-libwinpthread-git	5.0.0.4634.697f757
+
 m2w64-make	4.1.2351.a80a8b8
+
 m2w64-mpc	1.0.3
+
 m2w64-mpfr	3.1.4
+
 m2w64-pkg-config	0.29.1
+
 m2w64-toolchain	5.3.0
+
 m2w64-tools-git	5.0.0.4592.90b8472
+
 m2w64-windows-default-manifest	6.4
+
 m2w64-winpthreads-git	5.0.0.4634.697f757
+
 m2w64-zlib	1.2.8
+
 mako	1.0.7
+
 markdown	2.6.11
+
 markupsafe	1
+
 mkl	2018.0.3
+
 mkl-service	1.1.2
+
 mkl_fft	1.0.1
+
 mkl_random	1.0.1
+
 msys2-conda-epoch	20160418
+
 numpy	1.14.3
+
 numpy-base	1.14.3
+
 pip	9.0.3
+
 plotly	3.2.1
+
 protobuf	3.5.2
+
 pygpu	0.7.6
+
 python	3.5.5
+
 pytz	2018.3
+
 pyyaml	3.12
+
 requests	2.19.1
+
 retrying	1.3.3
+
 scikit-learn	0.20.0
+
 scipy	1.0.1
+
 setuptools	39.0.1
+
 six	1.11.0
+
 tensorboard	1.8.0
+
 tensorflow	1.8.0
+
 tensorflow-base	1.8.0
+
 termcolor	1.1.0
+
 theano	1.0.1
+
 urllib3	1.23
+
 vc	14
+
 vs2015_runtime	14.0.25123
+
 werkzeug	0.14.1
+
 wheel	0.31.0
+
 wincertstore	0.2
+
 yaml	0.1.7
+
 zlib	1.2.11
-
-
