@@ -18,20 +18,20 @@ from snn.hoSnn import HOSnn
 
 """
 Architecture of the classes
-  HOSnn
+      HOSnn
 	|			
- HOLayer	
+     HOLayer	
 	|
-	------------------------------------------------------
-	|				  									 |
-HOMaxPooling											HOActivation
-	|													 |
-	-------------------------------------				 ----------------
-	|									|				 |			    |
-HOMaxPoolingAprox				HOMaxPoolingExact	  HOConv		 HOConn
-	|													 |      	  	|
-------------------------							HOConvolution	HOConnected
-1		   1		   *
+	--------------------------------------------------------------
+	|				  			     |
+  HOMaxPooling							HOActivation
+	|							     |
+	---------------------------------		     ----------------
+	|				|		     |		    |
+HOMaxPoolingAprox		HOMaxPoolingExact	  HOConv	  HOConn
+	|						     |      	    |
+----------------------------				HOConvolution	HOConnected
+1	       1	   *
 Mux	  Comparator	Counter			
 """
 
