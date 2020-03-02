@@ -31,7 +31,7 @@ https://www.researchgate.net/publication/338677860_Master_Thesis_Software_Framew
     
         |                                                   |               |
         
-    -------------------------                           HOConvolution	HOConnected
+    -------------------------                           HOConvolution   HOConnected
     
     1           1           *
     
