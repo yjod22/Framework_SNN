@@ -18,21 +18,22 @@ from snn.hoSnn import HOSnn
 
 """
 Architecture of the classes
-      HOSnn
-	|			
-     HOLayer	
-	|
-	--------------------------------------------------------------
-	|				  			     |
-  HOMaxPooling							HOActivation
-	|							     |
-	---------------------------------		     ----------------
-	|				|		     |		    |
-HOMaxPoolingAprox		HOMaxPoolingExact	  HOConv	  HOConn
-	|						     |      	    |
-----------------------------				HOConvolution	HOConnected
-1	       1	   *
-Mux	  Comparator	Counter			
+    
+    HOSnn
+        |			
+    HOLayer	
+        |
+        -------------------------------------------------------------
+        |                                                           |
+    HOMaxPooling                                                HOActivation
+        |                                                           |
+        ---------------------------------                   -----------------
+        |                               |                   |               |
+    HOMaxPoolingAprox           HOMaxPoolingExact       HOConv          HOConn
+        |                                                   |               |
+    -------------------------                           HOConvolution	HOConnected
+    1           1           *
+    Mux     Comparator   Counter			
 """
 
 
@@ -95,26 +96,26 @@ class HOActivation(HOLayer):
 
         Examples of convolution layer configurations
         -------------------------------------------------
-        SC for addition operations | Activation function
-        (modeAddConv)              | (activationFunc)
+        SC for addition operations  | Activation function
+        (modeAddConv)               | (activationFunc)
         -------------------------------------------------
-        "Mux"			   | "Relu"
-        "Mux"                      | "ReluByMax"
-        "Mux"			   | "STanh"
-        "APC"			   | "SCRelu"
-        "APC"			   | "BTanh"
+        "Mux"                       | "Relu"
+        "Mux"                       | "ReluByMax"
+        "Mux"                       | "STanh"
+        "APC"                       | "SCRelu"
+        "APC"                       | "BTanh"
 
         Examples of connected layer configurations
         -------------------------------------------------
-        SC for addition operations | Activation function
-        (modeAddConn)              | (activationFunc)
+        SC for addition operations  | Activation function
+        (modeAddConn)               | (activationFunc)
         -------------------------------------------------
-        "Normal"		   | "None"
-        "Normal"		   | "Relu"
-        "Mux"			   | "None"
-        "Mux"			   | "Relu"
-        "APC"			   | "None"
-        "APC"			   | "Relu"
+        "Normal"                    | "None"
+        "Normal"                    | "Relu"
+        "Mux"                       | "None"
+        "Mux"                       | "Relu"
+        "APC"                       | "None"
+        "APC"                       | "Relu"
         """
         super().__init__(**kwargs)
 
