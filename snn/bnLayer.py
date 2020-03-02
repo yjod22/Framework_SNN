@@ -6,7 +6,6 @@
 ###############################################################################
 #
 #  Filename:	bnLayer.py
-#  Description:	
 #  Author/Date:	Junseok Oh / 2020-02-27
 #  Initiator:	Florian Neugebauer
 ################################################################################
@@ -165,10 +164,10 @@ class BNModel(object):
             the labels of training samples
 
         x_test: obejct
-            the inputs of training samples
+            the inputs of test samples
 
         y_test: obejct
-            the labes of training samples
+            the labes of test samples
 
         epochs: int
             the number of epoch times to retrain the neural network
