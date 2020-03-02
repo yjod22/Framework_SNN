@@ -36,8 +36,6 @@ https://www.researchgate.net/publication/338677860_Master_Thesis_Software_Framew
     1           1           *
     
     Mux     Comparator   Counter			
-"""
-
 
 ## Instruction guide for optimized SC-oriented DCNNs
 This subsection provides instruction for building, optimizing, and running SC-oriented DCNNs. Python version 3.5 is used in the framework. In the framework, users can design a certain DCNN with the following steps.
