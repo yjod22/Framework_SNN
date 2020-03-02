@@ -98,23 +98,23 @@ class HOActivation(HOLayer):
         SC for addition operations | Activation function
         (modeAddConv)              | (activationFunc)
         -------------------------------------------------
-        "Mux"					   | "Relu"
+        "Mux"			   | "Relu"
         "Mux"                      | "ReluByMax"
-        "Mux"					   | "STanh"
-        "APC"					   | "SCRelu"
-        "APC"					   | "BTanh"
+        "Mux"			   | "STanh"
+        "APC"			   | "SCRelu"
+        "APC"			   | "BTanh"
 
         Examples of connected layer configurations
         -------------------------------------------------
         SC for addition operations | Activation function
         (modeAddConn)              | (activationFunc)
         -------------------------------------------------
-        "Normal"				   | "None"
-        "Normal"				   | "Relu"
-        "Mux"					   | "None"
-        "Mux"					   | "Relu"
-        "APC"					   | "None"
-        "APC"					   | "Relu"
+        "Normal"		   | "None"
+        "Normal"		   | "Relu"
+        "Mux"			   | "None"
+        "Mux"			   | "Relu"
+        "APC"			   | "None"
+        "APC"			   | "Relu"
         """
         super().__init__(**kwargs)
 
