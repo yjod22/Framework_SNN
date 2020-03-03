@@ -80,7 +80,7 @@ batch_size: The size of the batch
 ![image1](https://github.com/yjod22/Framework_SNN/blob/releasedSW/retrainingAlgorithm.png)
 
 ### Step 7. Extract trained parameters
-Users can extract the trained parameters. The parameterAdaptive of the method GetConvolutionLayerWeightsBiasesSN has to be set to True to use the adaptive function in MUXs. When Adaptive is set to True, the number of a MUX's input is identical to the number of non-zero
+Users can extract the trained parameters. The parameter Adaptive of the method GetConvolutionLayerWeightsBiasesSN has to be set to True to use the adaptive function in MUXs. When Adaptive is set to True, the number of a MUX's input is identical to the number of non-zero
 weights in a kernel. 
 
 ### Step 8. Iterate over the test samples
