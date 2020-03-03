@@ -57,14 +57,23 @@ Users can design the specification of a BNN. The instance of BNModel should be d
 
 ### Step 6. Optimize the BNN
 Users can retrain the BNN by using OptimizeNetwork method of BNModel. OptimizeNetwork requires the following parameters:
+
 testNumber: The name of the main file
+
 titleLastEpochWeight: The path where trained parameters from the last epoch are saved
+
 titleFirstEpochWeight: The path where trained parameters from the first epoch are saved
+
 callbackFunction: The name of the class in which the callback functions of a DCNN are defined
+
 cntIter: The number of the maximum retraining iteration
+
 tupleLayer: The indices of the layers that are supposed to be retrained
+
 x_train, y_train, x_test, y_test: Loaded data from MNIST dataset
+
 epochs: The number of epochs for every retraining
+
 batch_size: The size of the batch
 
 #### The retraining algorithm
@@ -96,8 +105,6 @@ https://github.com/yjod22/Framework_SNN/blob/releasedSW/test/
 ![image2](https://github.com/yjod22/Framework_SNN/blob/releasedSW/testCaseConfiguration.png)
 
 ## The required keras.json file setting
-{
-
     "image_data_format": "channels_first",
     
     "epsilon": 1e-07,    
@@ -105,8 +112,6 @@ https://github.com/yjod22/Framework_SNN/blob/releasedSW/test/
     "floatx": "float32",
     
     "backend": "theano"
-    
-}
 
 ##  The required python packages for the framework
 absl-py	0.2.2
